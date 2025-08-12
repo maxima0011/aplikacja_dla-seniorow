@@ -226,8 +226,6 @@
             collection,
             addDoc,
             query,
-            orderBy,
-            limit,
             onSnapshot,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -280,7 +278,13 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error("Błąd logowania Google:", error);
-                showMessage("Błąd logowania Google. Spróbuj ponownie.", true);
+                if (error.code === 'auth/popup-blocked') {
+                    showMessage("Logowanie nieudane. Prosimy wyłączyć blokowanie wyskakujących okienek.", true);
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    showMessage("Błąd logowania: Domena aplikacji nie jest autoryzowana. Zalogowano jako gość.", true);
+                } else {
+                    showMessage("Błąd logowania Google. Spróbuj ponownie.", true);
+                }
             }
         };
 
@@ -291,7 +295,13 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error("Błąd logowania Facebook:", error);
-                showMessage("Błąd logowania Facebook. Spróbuj ponownie.", true);
+                if (error.code === 'auth/popup-blocked') {
+                    showMessage("Logowanie nieudane. Prosimy wyłączyć blokowanie wyskakujących okienek.", true);
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    showMessage("Błąd logowania: Domena aplikacji nie jest autoryzowana. Zalogowano jako gość.", true);
+                } else {
+                    showMessage("Błąd logowania Facebook. Spróbuj ponownie.", true);
+                }
             }
         };
 
@@ -350,6 +360,7 @@
             const rankingList = document.getElementById('ranking-list');
             rankingList.innerHTML = '<p class="text-center text-gray-500">Ładowanie rankingu...</p>';
 
+            // Usunięto orderBy() ze względu na potencjalne błędy z indeksami
             const scoresQuery = query(collection(db, collectionPath));
             
             onSnapshot(scoresQuery, (querySnapshot) => {
@@ -366,7 +377,7 @@
                 });
 
                 // Sortowanie wyników po dacie i wyniku
-                scores.sort((a, b) => b.score - a.score || b.timestamp?.seconds - a.timestamp?.seconds);
+                scores.sort((a, b) => b.score - a.score || (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
                 scores.forEach((score, index) => {
                     const scoreItem = document.createElement('div');
@@ -457,7 +468,7 @@
         }
 
         function createMemoryBoard() {
-            const emojis = ['🍇', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎'];
+            const emojis = ['🍇', ' ', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎'];
             memoryCards = [...emojis, ...emojis];
             shuffle(memoryCards);
 
