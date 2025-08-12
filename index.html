@@ -4,291 +4,451 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikacja dla Seniorów</title>
-    <!-- Ładowanie biblioteki Tailwind CSS dla responsywnych stylów -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Styl dla czcionki Inter, która jest czytelna i nowoczesna */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
         }
-
-        /* Styl dla ikon SVG, aby były większe i bardziej widoczne */
-        .icon {
-            width: 4rem;
-            height: 4rem;
-            fill: currentColor;
+        .container {
+            max-width: 100%;
+            padding: 1rem;
         }
-        
-        .icon-sm {
-            width: 2rem;
-            height: 2rem;
-            fill: currentColor;
-        }
-
-        /* Klasy dla animacji wiadomości */
-        .message-box-show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .message-box-hide {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        /* Styl dla pojedynczej karty w grze pamięciowej */
         .card {
-            width: 100px;
-            height: 100px;
-            perspective: 1000px;
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .header {
+            text-align: center;
+        }
+        .time-date {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .menu-button {
+            padding: 1.5rem;
+            border-radius: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            transition: transform 0.2s;
             cursor: pointer;
-            transition: transform 0.5s ease-in-out;
-            transform-style: preserve-3d;
-        }
-
-        /* Widok z przodu i z tyłu karty */
-        .card-inner {
             width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            border-radius: 1rem;
         }
-        
-        .card.flipped .card-inner {
-            transform: rotateY(180deg);
+        .menu-button:hover {
+            transform: scale(1.02);
         }
-
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
+        .game-card {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: bold;
-            color: #fff;
+            text-align: center;
+        }
+        .game-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .game-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .message-box {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem 2rem;
             border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
         }
-
-        .card-back {
-            background-color: #6366f1; /* Fioletowy kolor z Tailwind */
-            transform: rotateY(180deg);
-        }
-
-        .card-front {
-            background-color: #f3f4f6; /* Jasnoszary kolor z Tailwind */
-            color: #1f2937; /* Ciemnoszary kolor tekstu */
+        .message-box.show {
+            opacity: 1;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <!-- Główny kontener aplikacji -->
-    <div id="main-app" class="bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 md:p-8">
+    <!-- Kontener główny aplikacji -->
+    <div id="app-container" class="container bg-white p-6 rounded-3xl shadow-xl w-full max-w-lg transition-all duration-500 ease-in-out">
+        
+        <!-- Ekran główny -->
+        <div id="main-screen">
+            <div class="header mb-6">
+                <div id="time-display" class="text-5xl font-extrabold text-blue-700"></div>
+                <div id="date-display" class="text-xl font-semibold text-gray-500"></div>
+                <div id="user-info" class="text-lg font-semibold text-gray-700 mt-2"></div>
+            </div>
 
-        <!-- Sekcja wiadomości/zegara -->
-        <div class="mb-6 text-center">
-            <p id="dateDisplay" class="text-xl md:text-2xl font-semibold text-gray-500"></p>
-            <p id="timeDisplay" class="text-5xl md:text-6xl font-extrabold text-blue-600 mt-2"></p>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button onclick="showReminders()" class="menu-button bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    Przypomnienia 🔔
+                </button>
+                <button onclick="showGames()" class="menu-button bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    Gry 🎮
+                </button>
+            </div>
+            <div class="grid grid-cols-1 gap-4 mb-6">
+                <button onclick="showRanking()" class="menu-button bg-yellow-500 text-white hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    Ranking 🏆
+                </button>
+            </div>
 
-        <!-- Siatka z głównymi przyciskami (funkcjami) -->
-        <div class="flex justify-center mb-4">
-            <!-- Przycisk "Przypomnienia" -->
-            <button class="bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="showMessage('Przechodzenie do przypomnień...')">
-                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 2a9 9 0 00-9 9v3a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h6a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-3a9 9 0 00-9-9zM12 21a2 2 0 100-4 2 2 0 000 4z"/>
-                </svg>
-                <span class="mt-4 text-lg md:text-xl font-medium">Przypomnienia</span>
+
+            <!-- Przyciski logowania, widoczne tylko dla niezalogowanych użytkowników -->
+            <div id="auth-buttons" class="grid grid-cols-2 gap-4">
+                <button onclick="signInWithGoogle()" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 flex items-center justify-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Google Logo">
+                    Zaloguj z Google
+                </button>
+                <button onclick="signInWithFacebook()" class="menu-button bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 flex items-center justify-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Facebook_Logo_%282019%29.svg/1024px-Facebook_Logo_%282019%29.svg.png" class="w-6 h-6 mr-2" alt="Facebook Logo">
+                    Zaloguj z Facebook
+                </button>
+            </div>
+            
+            <!-- Przycisk wylogowania, widoczny tylko dla zalogowanych użytkowników -->
+            <button id="logout-button" onclick="signOutUser()" class="hidden menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Wyloguj
             </button>
         </div>
 
-        <div class="mt-8">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Gry</h2>
-            <div class="grid grid-cols-3 gap-4 md:gap-6">
-                <!-- Przycisk "Gra logiczna" -->
-                <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="startProverbGame()">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z"/>
-                        <path d="M11 11h2v6h-2v-6zM11 7h2v2h-2V7z"/>
-                    </svg>
-                    <span class="mt-2 text-md md:text-lg font-medium text-center">Logiczna</span>
+        <!-- Ekran gier -->
+        <div id="games-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Wybierz grę</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="showMemoryGame()" class="menu-button bg-yellow-400 text-gray-800 hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    <div class="game-card">
+                        <span class="game-icon">🧠</span>
+                        <span class="game-title">Gra Pamięciowa</span>
+                    </div>
                 </button>
-                <!-- Przycisk "Gra pamięciowa" -->
-                <button id="memoryGameBtn" class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="startMemoryGame()">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z"/>
-                        <path d="M12 11a1 1 0 101 1A1 1 0 0012 11zm-2 2h4v-2h-4v2zm-2 2h8v-2h-8v2zM12 7a1 1 0 101 1A1 1 0 0012 7zm-2 2h4v-2h-4v2z"/>
-                    </svg>
-                    <span class="mt-2 text-md md:text-lg font-medium text-center">Pamięciowa</span>
+                <button onclick="showLogicGame()" class="menu-button bg-purple-400 text-white hover:bg-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-300">
+                    <div class="game-card">
+                        <span class="game-icon">🧩</span>
+                        <span class="game-title">Gra Logiczna</span>
+                    </div>
                 </button>
-                <!-- Przycisk "Gra matematyczna" -->
-                <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="startMathGame()">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M21 4H3a1 1 0 00-1 1v14a1 1 0 001 1h18a1 1 0 001-1V5a1 1 0 00-1-1zm-9 11h-2v-2h2v2zm0-4h-2v-2h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm0 4h-2v-2h2v2zM6 7h2v2H6V7zm4 0h2v2h-2V7z"/>
-                    </svg>
-                    <span class="mt-2 text-md md:text-lg font-medium text-center">Matematyczna</span>
+                <button onclick="showMathGame()" class="menu-button bg-teal-400 text-white hover:bg-teal-500 focus:outline-none focus:ring-4 focus:ring-teal-300">
+                    <div class="game-card">
+                        <span class="game-icon">➕</span>
+                        <span class="game-title">Gra Matematyczna</span>
+                    </div>
                 </button>
             </div>
-        </div>
-
-        <!-- Sekcja logowania -->
-        <div class="mt-8">
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 text-center">Logowanie</h2>
-            <div class="flex flex-col items-center space-y-4">
-                <!-- Przycisk "Zaloguj z Google" -->
-                <button class="bg-white border border-gray-300 text-gray-800 rounded-2xl shadow-lg p-3 w-full max-w-sm flex items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="simulateLogin('Google')">
-                    <svg class="icon-sm mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M24 9.5c3.27 0 5.86 1.15 7.91 3.12l5.77-5.59C34.33 3.65 29.5 2 24 2 15.54 2 8.35 6.8 4.3 14.7L10 18.06c2.47-7.2 8.6-12.56 14-12.56z"/>
-                        <path fill="#4CAF50" d="M4.3 14.7l5.7 3.36c-1.38 4.67-.34 9.87 3.2 13.56L10 37.07C4.83 31.84 2 24.36 2 16.5c0-2.47.45-4.83 1.25-7.05L4.3 14.7z"/>
-                        <path fill="#4285F4" d="M24 46c5.78 0 10.97-2.18 15-5.74L35.2 34.3a12.83 12.83 0 01-11.2 5.5c-5.4 0-10.02-3.6-11.66-8.7L6.5 35.8C10.74 41.5 16.94 46 24 46z"/>
-                        <path fill="#EA4335" d="M46 16.5c0-.8-.1-1.6-.26-2.38H24v4.5h12.98c-.52 2.36-2.07 4.25-4.14 5.56l5.77 4.41c3.55-3.32 5.6-8.15 5.6-13.09z"/>
-                    </svg>
-                    <span class="text-lg font-medium">Zaloguj z Google</span>
-                </button>
-
-                <!-- Przycisk "Zaloguj z Facebook" -->
-                <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg p-3 w-full max-w-sm flex items-center justify-center transition-transform transform-gpu hover:scale-105" onclick="simulateLogin('Facebook')">
-                    <svg class="icon-sm mr-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.96 3.65 9.09 8.44 9.9V15.4H7.9V12h2.54V9.38c0-2.52 1.54-3.9 3.78-3.9 1.09 0 2.03.08 2.3.12v2.6h-1.57c-1.24 0-1.48.59-1.48 1.45V12h2.95l-.47 3.4H13.5v6.5h8.5V12z"/>
-                    </svg>
-                    <span class="text-lg font-medium">Zaloguj z Facebook</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Kontener gry pamięciowej (początkowo ukryty) -->
-    <div id="memoryGame" class="hidden bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 md:p-8 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Gra pamięciowa</h2>
-        <div id="gameBoard" class="grid grid-cols-4 gap-4 justify-items-center mb-6">
-            <!-- Tutaj będą dynamicznie dodawane karty -->
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-gray-600 mb-4">
-            Wynik: <span id="memoryScoreDisplay">0</span>
-        </p>
-        <div id="memory-game-controls" class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-            <button id="memoryPlayAgainBtn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Zagraj ponownie
-            </button>
-            <button onclick="goBackToMainScreen()" class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
+            <button onclick="showMainScreen()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 Powrót do menu
+            </button>
+        </div>
+        
+        <!-- Ekran rankingu -->
+        <div id="ranking-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Rankingi</h2>
+            <div id="ranking-list" class="flex flex-col gap-2">
+                <!-- Wyniki ładowane dynamicznie -->
+            </div>
+            <button onclick="showMainScreen()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Powrót do menu
+            </button>
+        </div>
+
+        <!-- Gra Pamięciowa -->
+        <div id="memory-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Gra Pamięciowa</h2>
+            <div id="memory-grid" class="grid grid-cols-4 gap-2 mb-4"></div>
+            <div class="text-center text-xl font-semibold text-gray-700">Wynik: <span id="memory-score">0</span></div>
+            <button onclick="resetMemoryGame()" class="menu-button mt-4 bg-orange-500 text-white hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300">
+                Restart
+            </button>
+            <button onclick="showGames()" class="menu-button mt-4 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Powrót do menu gier
+            </button>
+        </div>
+
+        <!-- Gra Logiczna -->
+        <div id="logic-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Gra Logiczna</h2>
+            <div class="card bg-gray-100 mb-4">
+                <p id="proverb-start" class="text-2xl text-center font-bold mb-4"></p>
+                <div id="proverb-options" class="grid grid-cols-1 gap-4"></div>
+            </div>
+            <div class="text-center text-xl font-semibold text-gray-700">Wynik: <span id="logic-score">0</span></div>
+            <button onclick="showGames()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Powrót do menu gier
+            </button>
+        </div>
+
+        <!-- Gra Matematyczna -->
+        <div id="math-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Gra Matematyczna</h2>
+            <div class="card bg-gray-100 mb-4 text-center">
+                <p id="math-problem" class="text-4xl font-bold text-blue-600 mb-4"></p>
+                <input type="number" id="math-answer" class="w-full text-center text-3xl p-4 border-2 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Twoja odpowiedź">
+            </div>
+            <button onclick="checkMathAnswer()" class="menu-button bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                Sprawdź
+            </button>
+            <div class="text-center text-xl font-semibold text-gray-700 mt-4">Wynik: <span id="math-score">0</span></div>
+            <button onclick="showGames()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Powrót do menu gier
             </button>
         </div>
     </div>
     
-    <!-- Kontener gry logicznej (odgadywanie przysłów, początkowo ukryty) -->
-    <div id="proverbGame" class="hidden bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 md:p-8 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Zgadnij przysłowie</h2>
-        <p class="text-lg md:text-xl text-gray-600 mb-4">Dokończ przysłowie.</p>
-        <p id="proverbStartDisplay" class="text-3xl md:text-4xl font-extrabold text-blue-600 mb-6"></p>
-        <div id="proverbOptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <!-- Opcje A, B, C, D zostaną dodane tutaj dynamicznie -->
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-gray-600 mb-4">
-            Twój wynik: <span id="proverbScoreDisplay">0</span>
-        </p>
-        <div id="proverbGameControls" class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-            <button id="proverbPlayAgainBtn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Zagraj od nowa
-            </button>
-            <button onclick="goBackToMainScreen()" class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Powrót do menu
-            </button>
-        </div>
-    </div>
+    <!-- Pudełko na wiadomości -->
+    <div id="message-box" class="message-box"></div>
 
-    <!-- Kontener gry matematycznej (początkowo ukryty) -->
-    <div id="mathGame" class="hidden bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 md:p-8 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Gra matematyczna</h2>
-        <p id="mathProblemDisplay" class="text-4xl md:text-5xl font-extrabold text-blue-600 mb-6"></p>
-        <div class="flex justify-center mb-4">
-            <input type="number" id="mathAnswerInput" placeholder="Wpisz odpowiedź" class="w-full max-w-xs px-4 py-3 text-2xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500">
-        </div>
-        <div class="flex justify-center space-x-4 mb-6">
-            <button id="mathCheckBtn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Sprawdź
-            </button>
-        </div>
-        <p class="text-xl md:text-2xl font-bold text-gray-600 mb-4">
-            Twój wynik: <span id="mathScoreDisplay">0</span>
-        </p>
-        <div id="mathGameControls" class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-            <button id="mathPlayAgainBtn" class="bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Zacznij od nowa
-            </button>
-            <button onclick="goBackToMainScreen()" class="bg-gray-400 hover:bg-gray-500 text-white rounded-2xl shadow-lg py-3 px-8 transition-transform transform-gpu hover:scale-105">
-                Powrót do menu
-            </button>
-        </div>
-    </div>
+    <!-- Skrypty Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            FacebookAuthProvider, 
+            signOut,
+            signInWithCustomToken,
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            query,
+            orderBy,
+            limit,
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Zmienne globalne Firebase (udostępniane przez środowisko)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-    <!-- Pływające okienko wiadomości -->
-    <div id="messageBox" class="fixed top-5 left-1/2 -translate-x-1/2 p-4 bg-gray-800 text-white rounded-xl shadow-lg transition-all duration-300 opacity-0 transform-gpu -translate-y-20 z-50">
-        <p id="messageText"></p>
-    </div>
+        // Inicjalizacja Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let userId = null;
+        let userName = 'Gość';
+        let isAuthReady = false;
 
-    <script>
-        // Funkcja do wyświetlania daty i czasu
-        function updateDateTime() {
-            const now = new Date();
-            const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        // Nasłuchiwanie na zmiany stanu autoryzacji
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userName = user.displayName || `Gość ${userId.substring(0, 4)}`;
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('logout-button').classList.remove('hidden');
+                document.getElementById('user-info').innerText = `Witaj, ${userName}!`;
+                
+                // Pokaż userId w celach debugowania i udostępniania
+                const userIdDisplay = document.createElement('p');
+                userIdDisplay.className = 'text-xs text-gray-400 mt-1';
+                userIdDisplay.innerText = `Twój ID: ${userId}`;
+                document.getElementById('user-info').appendChild(userIdDisplay);
 
-            document.getElementById('dateDisplay').textContent = now.toLocaleDateString('pl-PL', optionsDate);
-            document.getElementById('timeDisplay').textContent = now.toLocaleTimeString('pl-PL', optionsTime);
+                showMessage(`Zalogowano jako ${userName}.`);
+            } else {
+                userId = null;
+                userName = 'Gość';
+                document.getElementById('auth-buttons').classList.remove('hidden');
+                document.getElementById('logout-button').classList.add('hidden');
+                document.getElementById('user-info').innerText = 'Zaloguj się, aby zapisywać wyniki.';
+                showMessage('Wylogowano.');
+            }
+            isAuthReady = true;
+        });
+        
+        // Funkcja logowania przez Google
+        window.signInWithGoogle = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Błąd logowania Google:", error);
+                showMessage("Błąd logowania Google. Spróbuj ponownie.", true);
+            }
+        };
+
+        // Funkcja logowania przez Facebook
+        window.signInWithFacebook = async () => {
+            try {
+                const provider = new FacebookAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Błąd logowania Facebook:", error);
+                showMessage("Błąd logowania Facebook. Spróbuj ponownie.", true);
+            }
+        };
+
+        // Funkcja wylogowania
+        window.signOutUser = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Błąd wylogowania:", error);
+                showMessage("Błąd wylogowania. Spróbuj ponownie.", true);
+            }
+        };
+        
+        // Autoryzacja po załadowaniu strony
+        (async () => {
+          if (initialAuthToken) {
+            try {
+              await signInWithCustomToken(auth, initialAuthToken);
+            } catch (error) {
+              console.error('Błąd autoryzacji tokenem, próba logowania anonimowego:', error);
+              await signInAnonymously(auth);
+            }
+          } else {
+            await signInAnonymously(auth);
+          }
+        })();
+
+        // Funkcja zapisywania wyników w Firestore
+        async function saveScore(game, score) {
+            if (!isAuthReady || !userId) {
+                showMessage('Musisz być zalogowany, aby zapisać wynik.', true);
+                return;
+            }
+            const collectionPath = `/artifacts/${appId}/public/data/scores`;
+            try {
+                await addDoc(collection(db, collectionPath), {
+                    userId: userId,
+                    userName: userName,
+                    game: game,
+                    score: score,
+                    timestamp: serverTimestamp()
+                });
+                showMessage(`Wynik ${score} zapisany w grze ${game}!`);
+            } catch (e) {
+                console.error("Błąd podczas dodawania dokumentu: ", e);
+                showMessage("Błąd podczas zapisywania wyniku.", true);
+            }
         }
 
-        // Aktualizacja daty i czasu co sekundę
-        setInterval(updateDateTime, 1000);
-        updateDateTime(); // Początkowe wywołanie, aby od razu wyświetlić czas
+        // Funkcja ładowania wyników z Firestore
+        window.loadScores = () => {
+            if (!isAuthReady) {
+                return;
+            }
+            const collectionPath = `/artifacts/${appId}/public/data/scores`;
+            const rankingList = document.getElementById('ranking-list');
+            rankingList.innerHTML = '<p class="text-center text-gray-500">Ładowanie rankingu...</p>';
+
+            const scoresQuery = query(collection(db, collectionPath));
+            
+            onSnapshot(scoresQuery, (querySnapshot) => {
+                rankingList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    rankingList.innerHTML = '<p class="text-center text-gray-500">Brak wyników do wyświetlenia.</p>';
+                    return;
+                }
+                
+                const scores = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    scores.push(data);
+                });
+
+                // Sortowanie wyników po dacie i wyniku
+                scores.sort((a, b) => b.score - a.score || b.timestamp?.seconds - a.timestamp?.seconds);
+
+                scores.forEach((score, index) => {
+                    const scoreItem = document.createElement('div');
+                    scoreItem.className = 'flex items-center justify-between p-4 bg-gray-100 rounded-xl';
+                    scoreItem.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="text-2xl font-bold text-gray-600 mr-4">${index + 1}.</span>
+                            <div>
+                                <span class="font-semibold text-lg">${score.userName}</span>
+                                <span class="text-sm text-gray-500 ml-2">(${score.game})</span>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-bold text-blue-600">${score.score}</span>
+                    `;
+                    rankingList.appendChild(scoreItem);
+                });
+            });
+        };
+    </script>
+    
+    <script>
+        // Funkcje do zarządzania wyświetlanymi ekranami
+        function showScreen(screenId) {
+            document.querySelectorAll('#app-container > div').forEach(div => {
+                div.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showMainScreen() { showScreen('main-screen'); }
+        function showGames() { showScreen('games-screen'); }
+        function showRanking() {
+            showScreen('ranking-screen');
+            loadScores();
+        }
+        function showMemoryGame() { 
+            showScreen('memory-game-screen'); 
+            resetMemoryGame();
+        }
+        function showLogicGame() { 
+            showScreen('logic-game-screen'); 
+            generateProverbProblem();
+        }
+        function showMathGame() { 
+            showScreen('math-game-screen'); 
+            generateMathProblem();
+        }
+
+        // Funkcje dla zegara i daty
+        function updateTime() {
+            const now = new Date();
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('time-display').innerText = now.toLocaleTimeString('pl-PL', timeOptions);
+            document.getElementById('date-display').innerText = now.toLocaleDateString('pl-PL', dateOptions);
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
 
         // Funkcja do pokazywania wiadomości
-        function showMessage(text) {
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
-
-            // Ustawia tekst i pokazuje okno wiadomości
-            messageText.textContent = text;
-            messageBox.classList.remove('message-box-hide');
-            messageBox.classList.add('message-box-show');
-
-            // Ukrywa okno wiadomości po 3 sekundach
+        function showMessage(text, isError = false) {
+            const msgBox = document.getElementById('message-box');
+            msgBox.innerText = text;
+            msgBox.style.backgroundColor = isError ? '#f44336' : '#4CAF50';
+            msgBox.classList.add('show');
             setTimeout(() => {
-                messageBox.classList.remove('message-box-show');
-                messageBox.classList.add('message-box-hide');
+                msgBox.classList.remove('show');
             }, 3000);
         }
-        
-        // Funkcja do symulacji logowania
-        function simulateLogin(provider) {
-            showMessage(`Logowanie przez ${provider}...`);
-            setTimeout(() => {
-                showMessage(`Zalogowano pomyślnie przez ${provider}!`);
-            }, 1500); // Symulacja opóźnienia
-        }
-        
-        // ---------- GLOBALNE ZARZĄDZANIE WIDOKAMI ----------
-        const mainApp = document.getElementById('main-app');
-        const memoryGame = document.getElementById('memoryGame');
-        const proverbGame = document.getElementById('proverbGame');
-        const mathGame = document.getElementById('mathGame');
 
-        // Funkcja do powrotu do menu głównego
-        function goBackToMainScreen() {
-            memoryGame.classList.add('hidden');
-            proverbGame.classList.add('hidden');
-            mathGame.classList.add('hidden');
-            mainApp.classList.remove('hidden');
-        }
+        // Funkcje symulujące działanie przycisków
+        function showReminders() { showMessage('Dziś nie masz żadnych przypomnień.'); }
 
-        // Funkcja pomocnicza do tasowania tablicy
+        // ----- Logika gier -----
+
+        // Gra Pamięciowa
+        let memoryCards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let memoryScore = 0;
+
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -296,309 +456,173 @@
             }
         }
 
-        // ---------- LOGIKA GRY PAMIĘCIOWEJ ----------
-        const gameBoard = document.getElementById('gameBoard');
-        const memoryScoreDisplay = document.getElementById('memoryScoreDisplay');
-        const memoryPlayAgainBtn = document.getElementById('memoryPlayAgainBtn');
-
-        const emojis = ['🍇', '🍉', '🍊', '🍋', '🍌', ' ', '🍎', '🍐'];
-        let cards = [];
-        let flippedCards = [];
-        let matchedPairs = 0;
-        let canFlip = true;
-        let memoryScore = 0;
-
         function createMemoryBoard() {
-            cards = [...emojis, ...emojis];
-            shuffle(cards);
-            
-            gameBoard.innerHTML = '';
-            matchedPairs = 0;
-            memoryScore = 0;
-            memoryScoreDisplay.textContent = memoryScore;
+            const emojis = ['🍇', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎'];
+            memoryCards = [...emojis, ...emojis];
+            shuffle(memoryCards);
 
-            cards.forEach((emoji, index) => {
+            const grid = document.getElementById('memory-grid');
+            grid.innerHTML = '';
+            memoryCards.forEach((emoji, index) => {
                 const card = document.createElement('div');
-                card.classList.add('card');
+                card.classList.add('card', 'bg-blue-300', 'p-4', 'rounded-lg', 'text-5xl', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'text-white', 'hover:bg-blue-400');
+                card.innerHTML = `<span class="hidden">${emoji}</span>`;
                 card.dataset.index = index;
-                card.innerHTML = `
-                    <div class="card-inner">
-                        <div class="card-face card-front"></div>
-                        <div class="card-face card-back">${emoji}</div>
-                    </div>
-                `;
                 card.addEventListener('click', flipCard);
-                gameBoard.appendChild(card);
+                grid.appendChild(card);
             });
         }
 
-        function flipCard() {
-            if (!canFlip || flippedCards.length === 2) return;
+        function flipCard(event) {
+            if (lockBoard) return;
+            const target = event.currentTarget;
+            if (target === firstCard) return;
 
-            const card = this;
-            if (card.classList.contains('flipped')) return;
-            
-            card.classList.add('flipped');
-            flippedCards.push(card);
+            target.classList.remove('bg-blue-300', 'hover:bg-blue-400');
+            target.classList.add('bg-white', 'text-black');
+            target.querySelector('span').classList.remove('hidden');
 
-            if (flippedCards.length === 2) {
-                canFlip = false;
-                setTimeout(checkMatch, 1000);
+            if (!firstCard) {
+                firstCard = target;
+                return;
             }
+
+            secondCard = target;
+            lockBoard = true;
+            checkForMatch();
         }
 
-        function checkMatch() {
-            const [card1, card2] = flippedCards;
-            const emoji1 = card1.querySelector('.card-back').textContent;
-            const emoji2 = card2.querySelector('.card-back').textContent;
+        function checkForMatch() {
+            const isMatch = firstCard.querySelector('span').innerText === secondCard.querySelector('span').innerText;
+            isMatch ? disableCards() : unflipCards();
+        }
 
-            if (emoji1 === emoji2) {
-                card1.removeEventListener('click', flipCard);
-                card2.removeEventListener('click', flipCard);
-                matchedPairs++;
-                memoryScore += 10;
-                memoryScoreDisplay.textContent = memoryScore;
-
-                if (matchedPairs === emojis.length) {
-                    checkWin();
-                }
-            } else {
-                card1.classList.remove('flipped');
-                card2.classList.remove('flipped');
-                memoryScore = Math.max(0, memoryScore - 2);
-                memoryScoreDisplay.textContent = memoryScore;
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            memoryScore += 10;
+            document.getElementById('memory-score').innerText = memoryScore;
+            showMessage('Para znaleziona!');
+            // Sprawdź, czy gra się skończyła
+            if (document.querySelectorAll('#memory-grid span:not(.hidden)').length === memoryCards.length) {
+                setTimeout(() => {
+                    showMessage(`Gra skończona! Twój wynik: ${memoryScore}`);
+                    saveScore('Gra Pamięciowa', memoryScore);
+                }, 1000);
             }
-            
-            flippedCards = [];
-            canFlip = true;
+            resetBoard();
         }
 
-        function checkWin() {
-            if (matchedPairs === emojis.length) {
-                showMessage(`Gratulacje! Wygrałeś z wynikiem ${memoryScore} punktów!`);
-            }
-        }
-
-        function startMemoryGame() {
-            mainApp.classList.add('hidden');
-            proverbGame.classList.add('hidden');
-            mathGame.classList.add('hidden');
-            memoryGame.classList.remove('hidden');
-            createMemoryBoard();
-        }
-
-        memoryPlayAgainBtn.addEventListener('click', createMemoryBoard);
-
-        // ---------- LOGIKA GRY LOGICZNEJ (Zgadnij przysłowie) ----------
-        const proverbStartDisplay = document.getElementById('proverbStartDisplay');
-        const proverbOptions = document.getElementById('proverbOptions');
-        const proverbScoreDisplay = document.getElementById('proverbScoreDisplay');
-        const proverbPlayAgainBtn = document.getElementById('proverbPlayAgainBtn');
-        
-        const proverbs = [
-            { start: "Kto rano wstaje,", end: "temu Pan Bóg daje." },
-            { start: "Gdzie kucharek sześć,", end: "tam nie ma co jeść." },
-            { start: "Nie chwal dnia,", end: "przed zachodem słońca." },
-            { start: "W zdrowym ciele,", end: "zdrowy duch." },
-            { start: "Bez pracy,", end: "nie ma kołaczy." },
-            { start: "Grosz do grosza,", end: "a będzie kokosza." },
-            { start: "Co dwie głowy,", end: "to nie jedna." },
-            { start: "Ziarnko do ziarnka,", end: "a zbierze się miarka." },
-            { start: "Jaki pan,", end: "taki kram." },
-            { start: "Lepszy wróbel w garści,", end: "niż gołąb na dachu." },
-            { start: "Apetyt rośnie,", end: "w miarę jedzenia." },
-            { start: "Kiedy wejdziesz między wrony,", end: "musisz krakać tak jak one." },
-            { start: "Nosił wilk razy kilka,", end: "ponieśli i wilka." },
-            { start: "Jak sobie pościelesz,", end: "tak się wyśpisz." },
-            { start: "Darowanemu koniowi w zęby się nie zagląda,", end: "a jak ma siodło, to już pewnie koń, nie osioł." },
-            { start: "Kto pod kim dołki kopie,", end: "ten sam w nie wpada." },
-            { start: "Co nagle, to po diable.", end: "Co powoli, to po aniele." },
-            { start: "Mądry Polak po szkodzie.", end: "Mądry Czech po szkodzie." },
-            { start: "Nie wszystko złoto,", end: "co się świeci." },
-            { start: "Lepiej późno,", end: "niż wcale." },
-            { start: "Prawdziwych przyjaciół poznaje się w biedzie.", end: "A fałszywych w nadmiarze." },
-            { start: "Cudze chwalicie,", end: "swego nie znacie." },
-            { start: "Fortuna kołem się toczy.", end: "Radość za smutkiem, smutek za radością." },
-        ];
-        
-        let shuffledProverbs = [];
-        let currentProverb = {};
-        let proverbScore = 0;
-        let gameOver = false;
-
-        function startProverbGame() {
-            mainApp.classList.add('hidden');
-            memoryGame.classList.add('hidden');
-            mathGame.classList.add('hidden');
-            proverbGame.classList.remove('hidden');
-            initializeProverbGame();
-        }
-
-        function initializeProverbGame() {
-            proverbScore = 0;
-            gameOver = false;
-            proverbScoreDisplay.textContent = proverbScore;
-            shuffledProverbs = [...proverbs];
-            shuffle(shuffledProverbs);
-            displayNextProverb();
-        }
-
-        function displayNextProverb() {
-            if (shuffledProverbs.length > 0) {
-                currentProverb = shuffledProverbs.pop();
-                proverbStartDisplay.textContent = currentProverb.start;
-                
-                const options = generateProverbOptions(currentProverb.end);
-                proverbOptions.innerHTML = '';
-                
-                options.forEach(option => {
-                    const button = document.createElement('button');
-                    button.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white', 'font-medium', 'rounded-2xl', 'shadow-lg', 'py-3', 'px-6', 'text-lg', 'md:text-xl', 'transition-transform', 'transform-gpu', 'hover:scale-105', 'w-full');
-                    button.textContent = option;
-                    button.addEventListener('click', () => checkProverbAnswer(option, button));
-                    proverbOptions.appendChild(button);
-                });
-                
-            } else {
-                gameOver = true;
-                showMessage(`Koniec gry! Twój wynik to ${proverbScore} poprawnych odpowiedzi.`);
-                proverbOptions.innerHTML = '<p class="text-2xl font-bold mt-4">Koniec przysłów!</p>';
-            }
-        }
-
-        function generateProverbOptions(correctAnswer) {
-            let options = [correctAnswer];
-            const incorrectProverbs = proverbs.filter(p => p.end !== correctAnswer);
-            
-            while (options.length < 4) {
-                const randomIncorrect = incorrectProverbs[Math.floor(Math.random() * incorrectProverbs.length)];
-                if (!options.includes(randomIncorrect.end)) {
-                    options.push(randomIncorrect.end);
-                }
-            }
-            shuffle(options);
-            return options;
-        }
-
-        function checkProverbAnswer(selectedAnswer, button) {
-            if (gameOver) return;
-            
-            const buttons = proverbOptions.querySelectorAll('button');
-            buttons.forEach(btn => btn.disabled = true);
-
-            if (selectedAnswer === currentProverb.end) {
-                showMessage('Poprawna odpowiedź!');
-                button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                button.classList.add('bg-green-500');
-                proverbScore++;
-                proverbScoreDisplay.textContent = proverbScore;
-            } else {
-                showMessage('Niepoprawna odpowiedź.');
-                button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                button.classList.add('bg-red-500');
-                
-                // Podświetl poprawną odpowiedź
-                buttons.forEach(btn => {
-                    if (btn.textContent === currentProverb.end) {
-                        btn.classList.remove('bg-blue-500');
-                        btn.classList.add('bg-green-500');
-                    }
-                });
-            }
-            
+        function unflipCards() {
             setTimeout(() => {
-                displayNextProverb();
-            }, 2000);
+                firstCard.classList.add('bg-blue-300', 'hover:bg-blue-400');
+                firstCard.classList.remove('bg-white', 'text-black');
+                firstCard.querySelector('span').classList.add('hidden');
+                secondCard.classList.add('bg-blue-300', 'hover:bg-blue-400');
+                secondCard.classList.remove('bg-white', 'text-black');
+                secondCard.querySelector('span').classList.add('hidden');
+                memoryScore = Math.max(0, memoryScore - 2);
+                document.getElementById('memory-score').innerText = memoryScore;
+                showMessage('Spróbuj jeszcze raz.', true);
+                resetBoard();
+            }, 1000);
         }
 
-        proverbPlayAgainBtn.addEventListener('click', initializeProverbGame);
+        function resetBoard() {
+            [firstCard, secondCard, lockBoard] = [null, null, false];
+        }
 
-        // ---------- LOGIKA GRY MATEMATYCZNEJ ----------
-        const mathProblemDisplay = document.getElementById('mathProblemDisplay');
-        const mathAnswerInput = document.getElementById('mathAnswerInput');
-        const mathCheckBtn = document.getElementById('mathCheckBtn');
-        const mathScoreDisplay = document.getElementById('mathScoreDisplay');
-        const mathPlayAgainBtn = document.getElementById('mathPlayAgainBtn');
-        
+        function resetMemoryGame() {
+            memoryScore = 0;
+            document.getElementById('memory-score').innerText = memoryScore;
+            createMemoryBoard();
+            resetBoard();
+        }
+
+        // Gra Logiczna
+        let logicScore = 0;
+        const proverbs = [
+            { start: "Kto rano wstaje...", end: "temu Pan Bóg daje.", options: ["...temu się śpieszy.", "...temu Pan Bóg daje.", "...temu kawa ucieka.", "...temu słońce wschodzi."] },
+            { start: "Lepszy wróbel w garści...", end: "niż gołąb na dachu.", options: ["...niż sowa na dachu.", "...niż gołąb na dachu.", "...niż sokół w powietrzu.", "...niż kura na grzędzie."] },
+            { start: "Gdzie kucharek sześć...", end: "tam nie ma co jeść.", options: ["...tam jest duży bałagan.", "...tam nie ma co jeść.", "...tam jest smaczny obiad.", "...tam jest wielkie gotowanie."] },
+            { start: "Bez pracy...", end: "nie ma kołaczy.", options: ["...nie ma odpoczynku.", "...nie ma pieniędzy.", "...nie ma zabawy.", "...nie ma kołaczy."] },
+            { start: "Co za dużo...", end: "to niezdrowo.", options: ["...to dobrze.", "...to za dużo.", "...to niezdrowo.", "...to lepiej."] }
+        ];
+
+        function generateProverbProblem() {
+            const problem = proverbs[Math.floor(Math.random() * proverbs.length)];
+            document.getElementById('proverb-start').innerText = problem.start;
+            const optionsContainer = document.getElementById('proverb-options');
+            optionsContainer.innerHTML = '';
+            
+            shuffle(problem.options);
+            problem.options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('menu-button', 'bg-blue-300', 'text-gray-800', 'hover:bg-blue-400', 'focus:outline-none', 'focus:ring-4', 'focus:ring-blue-300');
+                button.innerText = option;
+                button.onclick = () => checkProverbAnswer(option, problem.end);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function checkProverbAnswer(selected, correct) {
+            if (selected === correct) {
+                logicScore++;
+                document.getElementById('logic-score').innerText = logicScore;
+                showMessage('Poprawna odpowiedź!');
+            } else {
+                showMessage(`Niepoprawna odpowiedź. Prawidłowa to: ${correct}`, true);
+            }
+            setTimeout(generateProverbProblem, 2000);
+        }
+
+        // Gra Matematyczna
         let mathProblem = {};
         let mathScore = 0;
 
         function generateMathProblem() {
+            const num1 = Math.floor(Math.random() * 20) + 1;
+            const num2 = Math.floor(Math.random() * 20) + 1;
             const operators = ['+', '-', '*'];
             const operator = operators[Math.floor(Math.random() * operators.length)];
-            let num1, num2;
 
-            if (operator === '*') {
-                num1 = Math.floor(Math.random() * 10) + 1;
-                num2 = Math.floor(Math.random() * 10) + 1;
-            } else {
-                num1 = Math.floor(Math.random() * 50) + 1;
-                num2 = Math.floor(Math.random() * 50) + 1;
-                if (operator === '-') {
-                    [num1, num2] = [Math.max(num1, num2), Math.min(num1, num2)];
-                }
-            }
-            
-            let result;
+            let problemText = '';
+            let answer;
+
             switch (operator) {
-                case '+': result = num1 + num2; break;
-                case '-': result = num1 - num2; break;
-                case '*': result = num1 * num2; break;
+                case '+':
+                    problemText = `${num1} + ${num2} = ?`;
+                    answer = num1 + num2;
+                    break;
+                case '-':
+                    problemText = `${Math.max(num1, num2)} - ${Math.min(num1, num2)} = ?`;
+                    answer = Math.max(num1, num2) - Math.min(num1, num2);
+                    break;
+                case '*':
+                    problemText = `${num1} x ${num2} = ?`;
+                    answer = num1 * num2;
+                    break;
             }
 
-            return {
-                problem: `${num1} ${operator} ${num2}`,
-                answer: result
-            };
-        }
-
-        function startMathGame() {
-            mainApp.classList.add('hidden');
-            memoryGame.classList.add('hidden');
-            proverbGame.classList.add('hidden');
-            mathGame.classList.remove('hidden');
-            initializeMathGame();
-        }
-
-        function initializeMathGame() {
-            mathScore = 0;
-            mathScoreDisplay.textContent = mathScore;
-            generateNewMathProblem();
-        }
-
-        function generateNewMathProblem() {
-            mathProblem = generateMathProblem();
-            mathProblemDisplay.textContent = mathProblem.problem;
-            mathAnswerInput.value = '';
-            mathAnswerInput.focus();
+            mathProblem = { problemText, answer };
+            document.getElementById('math-problem').innerText = problemText;
+            document.getElementById('math-answer').value = '';
         }
 
         function checkMathAnswer() {
-            const userAnswer = parseInt(mathAnswerInput.value, 10);
-            if (isNaN(userAnswer)) {
-                showMessage('Wprowadź liczbę.');
-                return;
-            }
-
+            const userAnswer = parseInt(document.getElementById('math-answer').value, 10);
             if (userAnswer === mathProblem.answer) {
+                mathScore++;
+                document.getElementById('math-score').innerText = mathScore;
                 showMessage('Poprawna odpowiedź!');
-                mathScore += 1;
             } else {
-                showMessage(`Niepoprawna odpowiedź. Prawidłowy wynik to ${mathProblem.answer}.`);
+                showMessage(`Niepoprawna odpowiedź. Prawidłowa to: ${mathProblem.answer}`, true);
+                saveScore('Gra Matematyczna', mathScore);
+                mathScore = 0;
+                document.getElementById('math-score').innerText = mathScore;
             }
-
-            mathScoreDisplay.textContent = mathScore;
-            generateNewMathProblem();
+            generateMathProblem();
         }
-
-        mathCheckBtn.addEventListener('click', checkMathAnswer);
-        mathAnswerInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                checkMathAnswer();
-            }
-        });
-        mathPlayAgainBtn.addEventListener('click', initializeMathGame);
-
     </script>
 </body>
 </html>
