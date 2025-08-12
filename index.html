@@ -75,6 +75,26 @@
         .message-box.show {
             opacity: 1;
         }
+        .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .delete-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -123,6 +143,23 @@
             </button>
         </div>
 
+        <!-- Ekran przypomnień -->
+        <div id="reminders-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Moje Przypomnienia</h2>
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center">
+                    <input type="text" id="new-reminder-input" class="flex-grow p-3 rounded-l-lg border-2 border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Dodaj nowe przypomnienie...">
+                    <button onclick="addReminder()" class="bg-blue-500 text-white p-3 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300">Dodaj</button>
+                </div>
+                <div id="reminders-list" class="flex flex-col gap-2">
+                    <!-- Przypomnienia będą ładowane dynamicznie -->
+                </div>
+            </div>
+            <button onclick="showMainScreen()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Powrót do menu
+            </button>
+        </div>
+
         <!-- Ekran gier -->
         <div id="games-screen" class="hidden">
             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Wybierz grę</h2>
@@ -147,7 +184,7 @@
                 </button>
             </div>
             <button onclick="showMainScreen()" class="menu-button mt-6 bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
-                Powrót do menu
+                Powrót do menu gier
             </button>
         </div>
         
@@ -227,7 +264,9 @@
             addDoc,
             query,
             onSnapshot,
-            serverTimestamp
+            serverTimestamp,
+            deleteDoc,
+            doc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Zmienne globalne Firebase (udostępniane przez środowisko)
@@ -258,6 +297,9 @@
                 userIdDisplay.className = 'text-xs text-gray-400 mt-1';
                 userIdDisplay.innerText = `Twój ID: ${userId}`;
                 document.getElementById('user-info').appendChild(userIdDisplay);
+                
+                // Wczytaj przypomnienia po zalogowaniu
+                loadReminders();
 
                 showMessage(`Zalogowano jako ${userName}.`);
             } else {
@@ -265,7 +307,7 @@
                 userName = 'Gość';
                 document.getElementById('auth-buttons').classList.remove('hidden');
                 document.getElementById('logout-button').classList.add('hidden');
-                document.getElementById('user-info').innerText = 'Zaloguj się, aby zapisywać wyniki.';
+                document.getElementById('user-info').innerText = 'Zaloguj się, aby zapisywać wyniki i przypomnienia.';
                 showMessage('Wylogowano.');
             }
             isAuthReady = true;
@@ -281,9 +323,9 @@
                 if (error.code === 'auth/popup-blocked') {
                     showMessage("Logowanie nieudane. Prosimy wyłączyć blokowanie wyskakujących okienek.", true);
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    showMessage("Błąd logowania: Domena aplikacji nie jest autoryzowana. Zalogowano jako gość.", true);
+                    showMessage("Błąd logowania: domena, na której uruchomiona jest aplikacja, nie została dodana do autoryzowanych domen w konsoli Firebase.", true);
                 } else {
-                    showMessage("Błąd logowania Google. Spróbuj ponownie.", true);
+                    showMessage("Wystąpił błąd podczas logowania przez Google. Spróbuj ponownie.", true);
                 }
             }
         };
@@ -298,9 +340,9 @@
                 if (error.code === 'auth/popup-blocked') {
                     showMessage("Logowanie nieudane. Prosimy wyłączyć blokowanie wyskakujących okienek.", true);
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    showMessage("Błąd logowania: Domena aplikacji nie jest autoryzowana. Zalogowano jako gość.", true);
+                    showMessage("Błąd logowania: domena, na której uruchomiona jest aplikacja, nie została dodana do autoryzowanych domen w konsoli Firebase.", true);
                 } else {
-                    showMessage("Błąd logowania Facebook. Spróbuj ponownie.", true);
+                    showMessage("Wystąpił błąd podczas logowania przez Facebook. Spróbuj ponownie.", true);
                 }
             }
         };
@@ -396,6 +438,79 @@
                 });
             });
         };
+
+        // --- Funkcje dla Przypomnień ---
+        window.addReminder = async () => {
+            if (!isAuthReady || !userId) {
+                showMessage('Musisz być zalogowany, aby dodać przypomnienie.', true);
+                return;
+            }
+            const reminderInput = document.getElementById('new-reminder-input');
+            const reminderText = reminderInput.value.trim();
+            if (reminderText === "") {
+                showMessage("Wpisz treść przypomnienia.", true);
+                return;
+            }
+
+            const collectionPath = `/artifacts/${appId}/users/${userId}/reminders`;
+            try {
+                await addDoc(collection(db, collectionPath), {
+                    text: reminderText,
+                    createdAt: serverTimestamp()
+                });
+                reminderInput.value = '';
+                showMessage('Dodano nowe przypomnienie!');
+            } catch (e) {
+                console.error("Błąd podczas dodawania przypomnienia: ", e);
+                showMessage("Błąd podczas dodawania przypomnienia.", true);
+            }
+        };
+
+        window.loadReminders = () => {
+            if (!isAuthReady || !userId) {
+                document.getElementById('reminders-list').innerHTML = '<p class="text-center text-gray-500">Zaloguj się, aby zobaczyć swoje przypomnienia.</p>';
+                return;
+            }
+            const collectionPath = `/artifacts/${appId}/users/${userId}/reminders`;
+            const remindersList = document.getElementById('reminders-list');
+            remindersList.innerHTML = '<p class="text-center text-gray-500">Ładowanie przypomnień...</p>';
+            
+            const remindersQuery = query(collection(db, collectionPath));
+            onSnapshot(remindersQuery, (querySnapshot) => {
+                remindersList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    remindersList.innerHTML = '<p class="text-center text-gray-500">Brak przypomnień. Dodaj nowe!</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const reminderItem = document.createElement('div');
+                    reminderItem.className = 'reminder-item';
+                    reminderItem.innerHTML = `
+                        <span>${data.text}</span>
+                        <button class="delete-btn" onclick="deleteReminder('${doc.id}')">Usuń</button>
+                    `;
+                    remindersList.appendChild(reminderItem);
+                });
+            });
+        };
+
+        window.deleteReminder = async (docId) => {
+            if (!isAuthReady || !userId) {
+                showMessage('Musisz być zalogowany, aby usunąć przypomnienie.', true);
+                return;
+            }
+            const collectionPath = `/artifacts/${appId}/users/${userId}/reminders`;
+            try {
+                await deleteDoc(doc(db, collectionPath, docId));
+                showMessage('Usunięto przypomnienie.');
+            } catch (e) {
+                console.error("Błąd podczas usuwania przypomnienia: ", e);
+                showMessage("Błąd podczas usuwania przypomnienia.", true);
+            }
+        };
+
     </script>
     
     <script>
@@ -408,6 +523,13 @@
         }
 
         function showMainScreen() { showScreen('main-screen'); }
+        function showReminders() { 
+            showScreen('reminders-screen');
+            // Wywołaj loadReminders tylko, gdy użytkownik jest zalogowany
+            if (window.auth && window.auth.currentUser) {
+                loadReminders();
+            }
+        }
         function showGames() { showScreen('games-screen'); }
         function showRanking() {
             showScreen('ranking-screen');
@@ -448,9 +570,6 @@
             }, 3000);
         }
 
-        // Funkcje symulujące działanie przycisków
-        function showReminders() { showMessage('Dziś nie masz żadnych przypomnień.'); }
-
         // ----- Logika gier -----
 
         // Gra Pamięciowa
@@ -468,7 +587,7 @@
         }
 
         function createMemoryBoard() {
-            const emojis = ['🍇', ' ', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎'];
+            const emojis = ['🍇', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎'];
             memoryCards = [...emojis, ...emojis];
             shuffle(memoryCards);
 
