@@ -227,11 +227,12 @@
         // --- Inicjalizacja Firebase ---
         let db;
         let auth;
-        let currentUser; // Będziemy przechowywać aktualnego użytkownika
-        
+        let currentUser;
+        let isAuthReady = false; // Nowy wskaźnik gotowości
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
+        
         async function initFirebase() {
             if (!firebaseConfig || !firebaseConfig.apiKey) {
                 console.error("Błąd krytyczny: Brak obiektu konfiguracyjnego Firebase lub klucza API.");
@@ -246,17 +247,22 @@
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                     // Jeśli brak tokena, nasłuchuj i używaj anonimowego logowania, jeśli to konieczne
+                     // W tym przypadku onAuthStateChanged obsłuży wszystko
                 }
 
-                // Nasłuchuj zmian stanu uwierzytelnienia
+                // Nasłuchuj zmian stanu uwierzytelnienia. Uruchamia się raz, gdy stan jest znany.
                 onAuthStateChanged(auth, (user) => {
+                    isAuthReady = true; // Potwierdź, że Firebase Auth jest gotowe
+                    console.log("Firebase Auth jest gotowy.");
+                    
                     if (user) {
                         currentUser = user;
                         document.getElementById('user-info').textContent = `Witaj, ${user.displayName || 'Gościu'}!`;
                         document.getElementById('auth-buttons').classList.add('hidden');
                         document.getElementById('logout-button').classList.remove('hidden');
                         console.log("Użytkownik zalogowany:", user.uid, user.displayName);
-                        // Załaduj przypomnienia dla zalogowanego użytkownika
                         loadReminders();
                     } else {
                         currentUser = null;
@@ -269,19 +275,24 @@
                 });
             } catch (error) {
                 console.error("Błąd inicjalizacji Firebase:", error);
-                showMessage("Wystąpił błąd podczas ładowania aplikacji. Sprawdź konfigurację w konsoli Firebase.", "error");
+                showMessage(`Wystąpił błąd podczas ładowania aplikacji. Błąd: ${error.message}`, "error");
             }
         }
         
-        // Uruchom inicjalizację Firebase po załadowaniu okna
         window.onload = initFirebase;
 
         // --- Funkcje logowania ---
-        window.signInWithGoogle = async () => {
-            if (!auth) {
-                showMessage("Błąd: Firebase Auth nie jest zainicjowany.", "error");
+        // Wszystkie funkcje operujące na Firebase mają teraz dodatkowe sprawdzenie isAuthReady
+        function checkAuthAndRun(callback) {
+            if (!isAuthReady || !auth) {
+                showMessage("Błąd: Firebase Auth nie jest jeszcze zainicjowany. Proszę czekać.", "error");
+                console.error("Próba użycia Firebase Auth przed inicjalizacją.");
                 return;
             }
+            callback();
+        }
+
+        window.signInWithGoogle = () => checkAuthAndRun(async () => {
             try {
                 const provider = new GoogleAuthProvider();
                 await signInWithPopup(auth, provider);
@@ -290,13 +301,9 @@
                 console.error("Błąd logowania z Google:", error.code, error.message, error);
                 showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
-        };
+        });
 
-        window.signInWithFacebook = async () => {
-            if (!auth) {
-                showMessage("Błąd: Firebase Auth nie jest zainicjowany.", "error");
-                return;
-            }
+        window.signInWithFacebook = () => checkAuthAndRun(async () => {
             try {
                 const provider = new FacebookAuthProvider();
                 await signInWithPopup(auth, provider);
@@ -305,13 +312,9 @@
                 console.error("Błąd logowania z Facebook:", error.code, error.message, error);
                 showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
-        };
+        });
 
-        window.signOutUser = async () => {
-            if (!auth) {
-                showMessage("Błąd: Firebase Auth nie jest zainicjowany.", "error");
-                return;
-            }
+        window.signOutUser = () => checkAuthAndRun(async () => {
             try {
                 await signOut(auth);
                 showMessage("Pomyślnie wylogowano.");
@@ -319,7 +322,7 @@
                 console.error("Błąd wylogowania:", error);
                 showMessage("Błąd wylogowania. Spróbuj ponownie.", "error");
             }
-        };
+        });
         
         // --- Funkcje nawigacji ---
         window.showMainScreen = () => {
@@ -362,8 +365,8 @@
         updateTime();
 
         // --- Funkcje przypomnień ---
-        window.addReminder = async () => {
-            if (!currentUser) {
+        window.addReminder = () => checkAuthAndRun(async () => {
+            if (!currentUser || !db) {
                 showMessage("Zaloguj się, aby dodawać przypomnienia.", "error");
                 return;
             }
@@ -382,12 +385,12 @@
                 showMessage("Przypomnienie dodane!");
             } catch (error) {
                 console.error("Błąd dodawania przypomnienia:", error);
-                showMessage("Błąd podczas dodawania przypomnienia.", "error");
+                showMessage("Błąd podczas dodawania przypomnienia. Sprawdź uprawnienia w Firestore.", "error");
             }
-        };
+        });
 
-        window.deleteReminder = async (docId) => {
-            if (!currentUser) {
+        window.deleteReminder = (docId) => checkAuthAndRun(async () => {
+            if (!currentUser || !db) {
                 showMessage("Zaloguj się, aby usuwać przypomnienia.", "error");
                 return;
             }
@@ -400,11 +403,14 @@
                 console.error("Błąd usuwania przypomnienia:", error);
                 showMessage("Błąd podczas usuwania przypomnienia.", "error");
             }
-        };
+        });
 
         // Funkcja do ładowania przypomnień
         function loadReminders() {
-            if (!currentUser || !db) return;
+            if (!currentUser || !db) {
+                console.log("Brak zalogowanego użytkownika lub bazy danych. Nie można załadować przypomnień.");
+                return;
+            }
             const userId = currentUser.uid;
             const remindersList = document.getElementById('reminders-list');
             const remindersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'reminders');
@@ -431,3 +437,4 @@
     </script>
 </body>
 </html>
+
