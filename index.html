@@ -130,23 +130,10 @@
                 </button>
             </div>
 
-
-            <!-- Przyciski logowania, które domyślnie są widoczne -->
-            <div id="auth-buttons" class="grid grid-cols-2 gap-4">
-                <button onclick="signInWithGoogle()" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 flex items-center justify-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Google Logo">
-                    Zaloguj z Google
-                </button>
-                <button onclick="signInWithFacebook()" class="menu-button bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 flex items-center justify-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Facebook_Logo_%282019%29.svg/1024px-Facebook_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Facebook Logo">
-                    Zaloguj z Facebook
-                </button>
+            <!-- Ten kontener będzie dynamicznie wypełniany przyciskami logowania/wylogowania -->
+            <div id="auth-state-container" class="mt-6 flex justify-center">
+                <p class="text-gray-500">Ładowanie...</p>
             </div>
-            
-            <!-- Przycisk wylogowania, widoczny tylko dla zalogowanych użytkowników -->
-            <button id="logout-button" onclick="signOutUser()" class="hidden menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
-                Wyloguj
-            </button>
         </div>
 
         <!-- Ekran przypomnień -->
@@ -162,7 +149,7 @@
                 <div id="reminders-list" class="flex flex-col gap-2">
                     <!-- Przypomnienia będą dodawane tutaj dynamicznie -->
                 </div>
-                <button onclick="showMainScreen()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                <button onclick="showMainScreen()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
                     Powrót
                 </button>
             </div>
@@ -232,7 +219,7 @@
         let db;
         let auth;
         let currentUser;
-        let isAuthReady = false; // Nowy wskaźnik gotowości
+        let isAuthReady = false;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
@@ -253,9 +240,8 @@
                     await signInWithCustomToken(auth, initialAuthToken);
                 }
 
-                // Nasłuchuj zmian stanu uwierzytelnienia. Uruchamia się raz, gdy stan jest znany.
                 onAuthStateChanged(auth, (user) => {
-                    isAuthReady = true; // Potwierdź, że Firebase Auth jest gotowe
+                    isAuthReady = true;
                     console.log("Firebase Auth jest gotowy. Użytkownik:", user ? user.uid : "Brak");
 
                     // Włącz przyciski menu po zainicjalizowaniu Firebase
@@ -263,18 +249,42 @@
                     document.getElementById('games-btn').disabled = false;
                     document.getElementById('ranking-btn').disabled = false;
                     
+                    const authStateContainer = document.getElementById('auth-state-container');
+                    authStateContainer.innerHTML = ''; // Wyczyść kontener
+
                     if (user) {
                         currentUser = user;
                         document.getElementById('user-info').textContent = `Witaj, ${user.displayName || 'Gościu'}!`;
-                        document.getElementById('auth-buttons').classList.add('hidden');
-                        document.getElementById('logout-button').classList.remove('hidden');
+                        
+                        const logoutButton = document.createElement('button');
+                        logoutButton.id = 'logout-button';
+                        logoutButton.className = 'menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300';
+                        logoutButton.textContent = 'Wyloguj';
+                        logoutButton.onclick = signOutUser;
+                        authStateContainer.appendChild(logoutButton);
+
                         console.log("Użytkownik zalogowany:", user.uid, user.displayName);
                         loadReminders();
                     } else {
                         currentUser = null;
                         document.getElementById('user-info').textContent = 'Zaloguj się, aby zapisywać postępy.';
-                        document.getElementById('auth-buttons').classList.remove('hidden');
-                        document.getElementById('logout-button').classList.add('hidden');
+
+                        const loginButtonsDiv = document.createElement('div');
+                        loginButtonsDiv.className = 'grid grid-cols-2 gap-4';
+                        loginButtonsDiv.id = 'auth-buttons';
+
+                        loginButtonsDiv.innerHTML = `
+                            <button onclick="signInWithGoogle()" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Google Logo">
+                                Zaloguj z Google
+                            </button>
+                            <button onclick="signInWithFacebook()" class="menu-button bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Facebook_Logo_%282019%29.svg/1024px-Facebook_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Facebook Logo">
+                                Zaloguj z Facebook
+                            </button>
+                        `;
+                        authStateContainer.appendChild(loginButtonsDiv);
+
                         document.getElementById('reminders-list').innerHTML = '';
                         console.log("Użytkownik wylogowany.");
                     }
@@ -288,7 +298,6 @@
         window.onload = initFirebase;
 
         // --- Funkcje logowania ---
-        // Wszystkie funkcje operujące na Firebase mają teraz dodatkowe sprawdzenie isAuthReady
         function checkAuthAndRun(callback) {
             if (!isAuthReady || !auth) {
                 showMessage("Błąd: Firebase Auth nie jest jeszcze zainicjowany. Proszę czekać.", "error");
@@ -421,7 +430,6 @@
             }
         });
 
-        // Funkcja do ładowania przypomnień
         function loadReminders() {
             if (!currentUser || !db) {
                 console.log("loadReminders(): Brak zalogowanego użytkownika lub bazy danych. Nie można załadować przypomnień.");
@@ -431,7 +439,6 @@
             const remindersList = document.getElementById('reminders-list');
             const remindersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'reminders');
 
-            // Użyj onSnapshot, aby na bieżąco aktualizować listę
             onSnapshot(remindersCollectionRef, (querySnapshot) => {
                 remindersList.innerHTML = '';
                 if (querySnapshot.empty) {
@@ -458,4 +465,3 @@
     </script>
 </body>
 </html>
-
