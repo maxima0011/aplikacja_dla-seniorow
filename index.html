@@ -233,9 +233,9 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
         async function initFirebase() {
-            if (!firebaseConfig.apiKey) {
-                console.error("Błąd: Brak klucza API w konfiguracji Firebase.");
-                showMessage("Wystąpił błąd podczas ładowania aplikacji. Brak klucza API.", "error");
+            if (!firebaseConfig || !firebaseConfig.apiKey) {
+                console.error("Błąd krytyczny: Brak obiektu konfiguracyjnego Firebase lub klucza API.");
+                showMessage("Wystąpił błąd podczas ładowania aplikacji. Brak konfiguracji Firebase.", "error");
                 return;
             }
             try {
@@ -269,7 +269,7 @@
                 });
             } catch (error) {
                 console.error("Błąd inicjalizacji Firebase:", error);
-                showMessage("Wystąpił błąd podczas ładowania aplikacji.", "error");
+                showMessage("Wystąpił błąd podczas ładowania aplikacji. Sprawdź konfigurację w konsoli Firebase.", "error");
             }
         }
         
@@ -287,7 +287,7 @@
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Google!");
             } catch (error) {
-                console.error("Błąd logowania z Google:", error.code, error.message);
+                console.error("Błąd logowania z Google:", error.code, error.message, error);
                 showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
         };
@@ -302,7 +302,7 @@
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Facebook!");
             } catch (error) {
-                console.error("Błąd logowania z Facebook:", error.code, error.message);
+                console.error("Błąd logowania z Facebook:", error.code, error.message, error);
                 showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
         };
