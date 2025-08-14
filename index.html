@@ -77,6 +77,9 @@
             transition: opacity 0.5s ease-in-out;
             opacity: 0;
             pointer-events: none;
+            text-align: center;
+            max-width: 90%;
+            word-wrap: break-word;
         }
         .message-box.show {
             opacity: 1;
@@ -101,14 +104,138 @@
         .delete-btn:hover {
             background-color: #dc2626;
         }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        /* Memory game specific styles */
+        #memory-game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        .memory-card {
+            background-color: #3b82f6; /* Blue card back */
+            height: 4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transform: rotateY(0deg);
+            transition: transform 0.5s, background-color 0.5s;
+            transform-style: preserve-3d;
+        }
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+            background-color: #fff;
+            color: #3b82f6;
+        }
+        .memory-card.matched {
+            background-color: #10b981; /* Green for matched cards */
+            color: white;
+            cursor: default;
+        }
+        .memory-card.flipped .front {
+            display: none;
+        }
+        .memory-card .back {
+            display: none;
+        }
+        .memory-card.flipped .back {
+            display: block;
+            transform: rotateY(180deg);
+        }
+        /* Math game specific styles */
+        .math-answer-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .math-answer-btn:hover {
+            transform: scale(1.02);
+        }
+        /* Puzzle game specific styles */
+        #puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+        .puzzle-tile {
+            background-color: #f9a8d4; /* Pink color for tiles */
+            height: 4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, background-color 0.2s;
+            user-select: none;
+        }
+        .puzzle-tile:hover {
+            transform: scale(1.05);
+        }
+        .puzzle-tile.empty {
+            background-color: transparent;
+            box-shadow: none;
+            cursor: default;
+        }
+        .puzzle-tile.solved {
+            background-color: #10b981; /* Green for solved state */
+        }
+        /* Words game specific styles */
+        .scrambled-word {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #4a5568;
+        }
+        .word-game-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.5rem;
+            text-align: center;
+            border-radius: 0.75rem;
+            border: 2px solid #cbd5e0;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <!-- Kontener główny aplikacji -->
+    <!-- Main application container -->
     <div id="app-container" class="container bg-white p-6 rounded-3xl shadow-xl w-full max-w-lg transition-all duration-500 ease-in-out">
         
-        <!-- Ekran główny -->
+        <!-- Main screen -->
         <div id="main-screen">
             <div class="header mb-6">
                 <div id="time-display" class="text-5xl font-extrabold text-blue-700"></div>
@@ -130,13 +257,13 @@
                 </button>
             </div>
 
-            <!-- Ten kontener będzie dynamicznie wypełniany przyciskami logowania/wylogowania -->
+            <!-- This container will be dynamically filled with login/logout buttons -->
             <div id="auth-state-container" class="mt-6 flex justify-center">
                 <p class="text-gray-500">Ładowanie...</p>
             </div>
         </div>
 
-        <!-- Ekran przypomnień -->
+        <!-- Reminders screen -->
         <div id="reminders-screen" class="hidden">
             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Moje Przypomnienia</h2>
             <div class="flex flex-col gap-4">
@@ -147,7 +274,7 @@
                     </button>
                 </div>
                 <div id="reminders-list" class="flex flex-col gap-2">
-                    <!-- Przypomnienia będą dodawane tutaj dynamicznie -->
+                    <!-- Reminders will be added here dynamically -->
                 </div>
                 <button onclick="showMainScreen()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
                     Powrót
@@ -155,23 +282,23 @@
             </div>
         </div>
 
-        <!-- Ekran gier -->
+        <!-- Games screen -->
         <div id="games-screen" class="hidden">
             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Wybierz Grę</h2>
             <div class="grid grid-cols-2 gap-4">
-                <button class="game-card card bg-blue-200 text-blue-800 hover:bg-blue-300">
+                <button id="memory-game-btn" class="game-card card bg-blue-200 text-blue-800 hover:bg-blue-300" onclick="showMemoryGame()">
                     <span class="game-icon">🧠</span>
                     <span class="game-title">Trening Pamięci</span>
                 </button>
-                <button class="game-card card bg-green-200 text-green-800 hover:bg-green-300">
+                <button id="math-game-btn" class="game-card card bg-green-200 text-green-800 hover:bg-green-300" onclick="showMathDifficultyScreen()">
                     <span class="game-icon">🔢</span>
                     <span class="game-title">Szybkie Liczenie</span>
                 </button>
-                <button class="game-card card bg-yellow-200 text-yellow-800 hover:bg-yellow-300">
+                <button id="puzzle-game-btn" class="game-card card bg-yellow-200 text-yellow-800 hover:bg-yellow-300" onclick="showPuzzleGame()">
                     <span class="game-icon">🧩</span>
                     <span class="game-title">Puzzle</span>
                 </button>
-                <button class="game-card card bg-purple-200 text-purple-800 hover:bg-purple-300">
+                <button id="word-game-btn" class="game-card card bg-purple-200 text-purple-800 hover:bg-purple-300" onclick="showWordGame()">
                     <span class="game-icon">🔤</span>
                     <span class="game-title">Słowa</span>
                 </button>
@@ -181,52 +308,184 @@
             </button>
         </div>
 
-        <!-- Ekran rankingu -->
+        <!-- Memory Game screen -->
+        <div id="memory-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Trening Pamięci</h2>
+            <div class="text-center mb-4">
+                <p class="text-xl font-semibold text-gray-600">Liczba ruchów: <span id="memory-moves">0</span></p>
+                <p class="text-xl font-semibold text-gray-600 mt-2">Dopasowano: <span id="memory-matched">0</span> / 8</p>
+            </div>
+            <div id="memory-game-board" class="bg-gray-200 rounded-lg">
+                <!-- Cards will be generated here -->
+            </div>
+            <button onclick="showGames()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
+                Powrót do gier
+            </button>
+        </div>
+
+        <!-- Math Game screen - Difficulty Selection -->
+        <div id="math-difficulty-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Wybierz Poziom Trudności</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="startMathGame('easy')" class="menu-button bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    Łatwy
+                </button>
+                <button onclick="startMathGame('medium')" class="menu-button bg-yellow-500 text-white hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    Średni
+                </button>
+                <button onclick="startMathGame('hard')" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300">
+                    Trudny
+                </button>
+            </div>
+            <button onclick="showGames()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
+                Powrót do gier
+            </button>
+        </div>
+
+        <!-- Math Game screen - Game board -->
+        <div id="math-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Szybkie Liczenie</h2>
+            <div class="flex justify-between items-center mb-4 text-xl font-semibold text-gray-600">
+                <p>Wynik: <span id="math-score">0</span></p>
+                <p>Czas: <span id="math-timer">60</span>s</p>
+            </div>
+            <div class="bg-gray-200 p-6 rounded-lg text-center mb-6">
+                <p class="text-5xl font-bold" id="math-question">?</p>
+            </div>
+            <div id="math-answers" class="grid grid-cols-2 gap-4">
+                <!-- Answer buttons will be generated here -->
+            </div>
+            <button onclick="showMathDifficultyScreen()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
+                Powrót
+            </button>
+        </div>
+
+        <!-- Puzzle Game screen -->
+        <div id="puzzle-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Gra Puzzle</h2>
+            <div id="puzzle-board" class="w-full aspect-square bg-gray-300 rounded-lg p-2 grid grid-cols-4 gap-2 mx-auto">
+                <!-- Puzzle tiles will be here -->
+            </div>
+            <button onclick="initPuzzleGame()" class="menu-button bg-blue-500 text-white hover:bg-blue-600 mt-6">
+                Nowa gra
+            </button>
+            <button onclick="showGames()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 mt-2">
+                Powrót do gier
+            </button>
+        </div>
+        
+        <!-- Word Game screen -->
+        <div id="word-game-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Gra Słowa</h2>
+            <div class="text-center mb-4">
+                <p class="text-xl font-semibold text-gray-600">Wynik: <span id="word-score">0</span></p>
+            </div>
+            <div id="scrambled-word" class="scrambled-word bg-gray-200 p-4 rounded-lg mb-6">?</div>
+            <input type="text" id="word-guess-input" class="word-game-input" placeholder="Wpisz swoje słowo..." onkeydown="handleWordInput(event)">
+            <button onclick="checkWord()" class="menu-button bg-blue-500 text-white hover:bg-blue-600">
+                Sprawdź
+            </button>
+            <button onclick="nextWord()" class="menu-button bg-green-500 text-white hover:bg-green-600 mt-2">
+                Następne słowo
+            </button>
+            <button onclick="showGames()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 mt-6">
+                Powrót do gier
+            </button>
+        </div>
+
+        <!-- Ranking screen -->
         <div id="ranking-screen" class="hidden">
             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Ranking Graczy</h2>
-            <p class="text-center text-gray-600 mb-4">Ta funkcja zostanie dodana wkrótce! Zaloguj się, aby zapisywać swoje wyniki.</p>
+            <p class="text-center text-gray-600 mb-4">Ta funkcja zostanie dodana wkrótce! Zaloguj się, aby zapisać swoje wyniki.</p>
             <button onclick="showMainScreen()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300">
                 Powrót
             </button>
         </div>
     </div>
     
-    <!-- Pole do wyświetlania wiadomości (np. potwierdzenia logowania) -->
+    <!-- Login modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-center mb-4">Logowanie</h3>
+            <p class="text-center text-gray-500 mb-4">Wybierz metodę logowania, aby zapisać swoje postępy.</p>
+            
+            <p class="text-center text-red-500 mb-4 font-bold">
+                UWAGA: Logowanie przez Google i Facebook może nie działać w tym środowisku ze względu na zabezpieczenia przeglądarek. Jeśli wystąpi błąd, użyj logowania za pomocą e-maila.
+            </p>
+
+            <!-- Social logins -->
+            <div class="flex gap-4 mb-4">
+                <button onclick="signInWithGoogle()" class="flex-1 menu-button bg-red-500 text-white hover:bg-red-600 flex items-center justify-center">
+                    <img src="https://www.gstatic.com/images/branding/product/2x/google_g_48dp.png" alt="Google" class="w-6 h-6 mr-2">
+                    Google
+                </button>
+                <button onclick="signInWithFacebook()" class="flex-1 menu-button bg-blue-700 text-white hover:bg-blue-800 flex items-center justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.505 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
+                    </svg>
+                    Facebook
+                </button>
+            </div>
+
+            <div class="my-4 flex items-center before:flex-1 before:border-t before:border-gray-300 before:mt-0.5 after:flex-1 after:border-t after:border-gray-300 after:mt-0.5">
+                <p class="text-center uppercase text-gray-500 mx-4">lub</p>
+            </div>
+
+            <!-- Login with Email -->
+            <input type="email" id="email-input" class="w-full p-3 rounded-lg border-2 border-gray-300 mb-2" placeholder="Email">
+            <input type="password" id="password-input" class="w-full p-3 rounded-lg border-2 border-gray-300 mb-4" placeholder="Hasło">
+            <div class="flex gap-2">
+                <button onclick="signInWithEmail()" class="menu-button bg-purple-500 text-white w-1/2">
+                    Zaloguj
+                </button>
+                <button onclick="signUpWithEmail()" class="menu-button bg-purple-700 text-white w-1/2">
+                    Zarejestruj
+                </button>
+            </div>
+
+            <button onclick="closeLoginModal()" class="menu-button bg-gray-500 text-white hover:bg-gray-600 mt-4">
+                Anuluj
+            </button>
+        </div>
+    </div>
+
+    <!-- Message box to display temporary messages -->
     <div id="message-box" class="message-box"></div>
 
-    <!-- Firebase SDK - konfigurowany i ładowany dynamicznie przez system -->
+    <!-- Firebase SDK - configured and loaded dynamically by the system -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, addDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Funkcja do wyświetlania tymczasowych wiadomości
+        // Function to display temporary messages
         function showMessage(message, type = 'success') {
             const messageBox = document.getElementById('message-box');
             messageBox.textContent = message;
             if (type === 'error') {
-                messageBox.style.backgroundColor = '#ef4444'; // Czerwony dla błędów
+                messageBox.style.backgroundColor = '#ef4444'; // Red for errors
             } else {
-                messageBox.style.backgroundColor = '#4CAF50'; // Zielony dla sukcesów
+                messageBox.style.backgroundColor = '#4CAF50'; // Green for success
             }
             messageBox.classList.add('show');
             setTimeout(() => {
                 messageBox.classList.remove('show');
-            }, 3000);
+            }, 5000); // Display for 5 seconds for better visibility of errors
         }
 
-        // --- Inicjalizacja Firebase ---
+        // --- Firebase Initialization ---
         let db;
         let auth;
         let currentUser;
         let isAuthReady = false;
+        let unsubscribeReminders = null; // Variable to store the unsubscribe function
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         
         async function initFirebase() {
             if (!firebaseConfig || !firebaseConfig.apiKey) {
-                console.error("Błąd krytyczny: Brak obiektu konfiguracyjnego Firebase lub klucza API.");
+                console.error("Critical error: Firebase config object or API key is missing.");
                 showMessage("Wystąpił błąd podczas ładowania aplikacji. Brak konfiguracji Firebase.", "error");
                 return;
             }
@@ -237,117 +496,195 @@
 
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } catch (error) {
+                        console.error("Error signing in with custom token:", error);
+                        // Fallback to anonymous sign-in if custom token fails
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
                 }
 
                 onAuthStateChanged(auth, (user) => {
                     isAuthReady = true;
-                    console.log("Firebase Auth jest gotowy. Użytkownik:", user ? user.uid : "Brak");
-
-                    // Włącz przyciski menu po zainicjalizowaniu Firebase
+                    console.log("Firebase Auth is ready. User:", user ? user.uid : "None");
+                    
                     document.getElementById('reminders-btn').disabled = false;
                     document.getElementById('games-btn').disabled = false;
                     document.getElementById('ranking-btn').disabled = false;
                     
                     const authStateContainer = document.getElementById('auth-state-container');
-                    authStateContainer.innerHTML = ''; // Wyczyść kontener
+                    authStateContainer.innerHTML = ''; // Clear container
 
                     if (user) {
                         currentUser = user;
-                        document.getElementById('user-info').textContent = `Witaj, ${user.displayName || 'Gościu'}!`;
-                        
-                        const logoutButton = document.createElement('button');
-                        logoutButton.id = 'logout-button';
-                        logoutButton.className = 'menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300';
-                        logoutButton.textContent = 'Wyloguj';
-                        logoutButton.onclick = signOutUser;
-                        authStateContainer.appendChild(logoutButton);
-
-                        console.log("Użytkownik zalogowany:", user.uid, user.displayName);
-                        loadReminders();
+                        if (user.isAnonymous) {
+                            document.getElementById('user-info').textContent = 'Jesteś zalogowany jako Gość. Zaloguj się, aby zapisać dane.';
+                            const loginButton = document.createElement('button');
+                            loginButton.id = 'login-button';
+                            loginButton.className = 'menu-button bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300';
+                            loginButton.textContent = 'Zaloguj się';
+                            loginButton.onclick = openLoginModal;
+                            authStateContainer.appendChild(loginButton);
+                        } else {
+                            document.getElementById('user-info').textContent = `Witaj! Twoje ID: ${user.uid}`;
+                            const logoutButton = document.createElement('button');
+                            logoutButton.id = 'logout-button';
+                            logoutButton.className = 'menu-button bg-gray-500 text-white hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300';
+                            logoutButton.textContent = 'Wyloguj';
+                            logoutButton.onclick = signOutUser;
+                            authStateContainer.appendChild(logoutButton);
+                            loadReminders();
+                        }
                     } else {
+                        // This block should only run if the initial auth state is null
+                        console.log("onAuthStateChanged: user is null, signing in anonymously.");
+                        signInAnonymously(auth).then(() => {
+                            console.log("Signed in anonymously.");
+                        }).catch((error) => {
+                            console.error("Anonymous sign in failed:", error);
+                            showMessage("Nie można zalogować się anonimowo. Aplikacja będzie działać bez zapisywania danych.", "error");
+                        });
+                        
                         currentUser = null;
                         document.getElementById('user-info').textContent = 'Zaloguj się, aby zapisywać postępy.';
-
-                        const loginButtonsDiv = document.createElement('div');
-                        loginButtonsDiv.className = 'grid grid-cols-2 gap-4';
-                        loginButtonsDiv.id = 'auth-buttons';
-
-                        loginButtonsDiv.innerHTML = `
-                            <button onclick="signInWithGoogle()" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 flex items-center justify-center">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Google Logo">
-                                Zaloguj z Google
-                            </button>
-                            <button onclick="signInWithFacebook()" class="menu-button bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-500 flex items-center justify-center">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Facebook_Logo_%282019%29.svg/1024px-Facebook_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Facebook Logo">
-                                Zaloguj z Facebook
-                            </button>
-                        `;
-                        authStateContainer.appendChild(loginButtonsDiv);
-
-                        document.getElementById('reminders-list').innerHTML = '';
-                        console.log("Użytkownik wylogowany.");
+                        authStateContainer.innerHTML = '<p class="text-center text-gray-500">Aby zapisać swoje dane, zaloguj się.</p>';
+                        document.getElementById('reminders-list').innerHTML = '<p class="text-center text-gray-500">Zaloguj się, aby zobaczyć swoje przypomnienia.</p>';
+                        if (unsubscribeReminders) {
+                            unsubscribeReminders();
+                            unsubscribeReminders = null;
+                        }
                     }
                 });
             } catch (error) {
-                console.error("Błąd inicjalizacji Firebase:", error);
+                console.error("Error initializing Firebase:", error);
                 showMessage(`Wystąpił błąd podczas ładowania aplikacji. Błąd: ${error.message}`, "error");
             }
         }
         
         window.onload = initFirebase;
 
-        // --- Funkcje logowania ---
-        function checkAuthAndRun(callback) {
-            if (!isAuthReady || !auth) {
-                showMessage("Błąd: Firebase Auth nie jest jeszcze zainicjowany. Proszę czekać.", "error");
-                console.error("Próba użycia Firebase Auth przed inicjalizacją.");
+        // --- Authentication functions ---
+        window.openLoginModal = () => {
+            document.getElementById('login-modal').classList.remove('hidden');
+        };
+
+        window.closeLoginModal = () => {
+            document.getElementById('login-modal').classList.add('hidden');
+        };
+        
+        window.signInWithEmail = async () => {
+            closeLoginModal();
+            const email = document.getElementById('email-input').value.trim();
+            const password = document.getElementById('password-input').value;
+            
+            if (!email || !password) {
+                showMessage("Wprowadź adres e-mail i hasło.", "error");
                 return;
             }
-            callback();
-        }
 
-        window.signInWithGoogle = () => checkAuthAndRun(async () => {
-            if (!isAuthReady) return;
             try {
-                const provider = new GoogleAuthProvider();
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessage("Pomyślnie zalogowano z e-mailem!");
+            } catch (error) {
+                console.error("Błąd logowania z e-mailem:", error);
+                let errorMessage = "Wystąpił błąd podczas logowania z e-mailem. Spróbuj ponownie.";
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "Niepoprawny e-mail lub hasło.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Nieprawidłowy format e-maila.";
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = "Logowanie za pomocą e-maila i hasła jest wyłączone w konfiguracji Firebase. Użyj innej metody lub poproś administratora o włączenie.";
+                }
+                showMessage(errorMessage, "error");
+            }
+        };
+
+        window.signUpWithEmail = async () => {
+            closeLoginModal();
+            const email = document.getElementById('email-input').value.trim();
+            const password = document.getElementById('password-input').value;
+
+            if (!email || !password) {
+                showMessage("Wprowadź adres e-mail i hasło.", "error");
+                return;
+            }
+
+            try {
+                // If the user is currently anonymous, try to link the new email/password to the existing anonymous account.
+                if (currentUser && currentUser.isAnonymous) {
+                    const credential = EmailAuthProvider.credential(email, password);
+                    await linkWithCredential(currentUser, credential);
+                    showMessage("Pomyślnie połączono konto gościa z nowym e-mailem!");
+                } else {
+                    // If the user is not anonymous, create a new account.
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessage("Pomyślnie zarejestrowano i zalogowano z e-mailem!");
+                }
+            } catch (error) {
+                console.error("Błąd rejestracji z e-mailem:", error);
+                let errorMessage = "Wystąpił błąd podczas rejestracji z e-mailem. Spróbuj ponownie.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "Użytkownik z tym e-mailem już istnieje. Zaloguj się lub użyj innej nazwy.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "Hasło jest zbyt słabe (musi mieć co najmniej 6 znaków).";
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = "Rejestracja za pomocą e-maila i hasła jest wyłączona w konfiguracji Firebase. Użyj innej metody lub poproś administratora o włączenie.";
+                }
+                showMessage(errorMessage, "error");
+            }
+        };
+
+        // --- Social Login Functions ---
+        window.signInWithGoogle = async () => {
+            closeLoginModal();
+            const provider = new GoogleAuthProvider();
+            try {
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Google!");
             } catch (error) {
-                console.error("Błąd logowania z Google:", error.code, error.message, error);
-                showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
+                console.error("Google login error:", error);
+                showMessage("Błąd logowania z Google. Prawdopodobnie przeglądarka blokuje wyskakujące okna. Spróbuj użyć e-maila.", "error");
             }
-        });
+        };
 
-        window.signInWithFacebook = () => checkAuthAndRun(async () => {
-            if (!isAuthReady) return;
+        window.signInWithFacebook = async () => {
+            closeLoginModal();
+            const provider = new FacebookAuthProvider();
             try {
-                const provider = new FacebookAuthProvider();
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Facebook!");
             } catch (error) {
-                console.error("Błąd logowania z Facebook:", error.code, error.message, error);
-                showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
+                console.error("Facebook login error:", error);
+                showMessage("Błąd logowania z Facebookiem. Prawdopodobnie przeglądarka blokuje wyskakujące okna. Spróbuj użyć e-maila.", "error");
             }
-        });
+        };
 
-        window.signOutUser = () => checkAuthAndRun(async () => {
-            if (!isAuthReady) return;
+        window.signOutUser = async () => {
             try {
                 await signOut(auth);
                 showMessage("Pomyślnie wylogowano.");
+                // After sign out, the onAuthStateChanged listener will handle anonymous sign-in
             } catch (error) {
-                console.error("Błąd wylogowania:", error);
+                console.error("Sign out error:", error);
                 showMessage("Błąd wylogowania. Spróbuj ponownie.", "error");
             }
-        });
+        };
         
-        // --- Funkcje nawigacji ---
+        // --- Navigation functions ---
         window.showMainScreen = () => {
             document.getElementById('main-screen').classList.remove('hidden');
             document.getElementById('reminders-screen').classList.add('hidden');
             document.getElementById('games-screen').classList.add('hidden');
             document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
         };
 
         window.showReminders = () => {
@@ -355,6 +692,11 @@
             document.getElementById('reminders-screen').classList.remove('hidden');
             document.getElementById('games-screen').classList.add('hidden');
             document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
         };
 
         window.showGames = () => {
@@ -362,6 +704,11 @@
             document.getElementById('reminders-screen').classList.add('hidden');
             document.getElementById('games-screen').classList.remove('hidden');
             document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
         };
 
         window.showRanking = () => {
@@ -369,9 +716,69 @@
             document.getElementById('reminders-screen').classList.add('hidden');
             document.getElementById('games-screen').classList.add('hidden');
             document.getElementById('ranking-screen').classList.remove('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
+        };
+        
+        // New function for memory game screen
+        window.showMemoryGame = () => {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('reminders-screen').classList.add('hidden');
+            document.getElementById('games-screen').classList.add('hidden');
+            document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.remove('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
+            initMemoryGame(); // Initialize the game when showing the screen
+        };
+        
+        // New function for math difficulty selection screen
+        window.showMathDifficultyScreen = () => {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('reminders-screen').classList.add('hidden');
+            document.getElementById('games-screen').classList.add('hidden');
+            document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.remove('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
         };
 
-        // --- Funkcje zegara i daty ---
+        // New function for puzzle game screen
+        window.showPuzzleGame = () => {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('reminders-screen').classList.add('hidden');
+            document.getElementById('games-screen').classList.add('hidden');
+            document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.remove('hidden');
+            document.getElementById('word-game-screen').classList.add('hidden');
+            initPuzzleGame();
+        };
+
+        // New function for word game screen
+        window.showWordGame = () => {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('reminders-screen').classList.add('hidden');
+            document.getElementById('games-screen').classList.add('hidden');
+            document.getElementById('ranking-screen').classList.add('hidden');
+            document.getElementById('memory-game-screen').classList.add('hidden');
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.add('hidden');
+            document.getElementById('puzzle-game-screen').classList.add('hidden');
+            document.getElementById('word-game-screen').classList.remove('hidden');
+            initWordGame();
+        };
+
+        // --- Clock and date functions ---
         function updateTime() {
             const now = new Date();
             const time = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
@@ -382,17 +789,15 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // --- Funkcje przypomnień ---
-        window.addReminder = () => checkAuthAndRun(async () => {
-            if (!currentUser || !db) {
+        // --- Reminder functions ---
+        window.addReminder = async () => {
+            if (!currentUser || currentUser.isAnonymous || !db) {
                 showMessage("Zaloguj się, aby dodawać przypomnienia.", "error");
-                console.log("Brak użytkownika lub bazy danych, nie można dodać przypomnienia.");
                 return;
             }
             const input = document.getElementById('new-reminder-input');
             const text = input.value.trim();
             if (text === "") {
-                console.log("Puste przypomnienie, nie dodano.");
                 return;
             }
 
@@ -405,17 +810,15 @@
                 });
                 input.value = '';
                 showMessage("Przypomnienie dodane!");
-                console.log("Dodano przypomnienie:", text);
             } catch (error) {
-                console.error("Błąd dodawania przypomnienia:", error);
+                console.error("Error adding reminder:", error);
                 showMessage("Błąd podczas dodawania przypomnienia. Sprawdź uprawnienia w Firestore.", "error");
             }
-        });
+        };
 
-        window.deleteReminder = (docId) => checkAuthAndRun(async () => {
-            if (!currentUser || !db) {
+        window.deleteReminder = async (docId) => {
+            if (!currentUser || currentUser.isAnonymous || !db) {
                 showMessage("Zaloguj się, aby usuwać przypomnienia.", "error");
-                console.log("Brak użytkownika lub bazy danych, nie można usunąć przypomnienia.");
                 return;
             }
             try {
@@ -423,26 +826,34 @@
                 const reminderDocRef = doc(db, 'artifacts', appId, 'users', userId, 'reminders', docId);
                 await deleteDoc(reminderDocRef);
                 showMessage("Przypomnienie usunięte!");
-                console.log("Usunięto przypomnienie o id:", docId);
             } catch (error) {
-                console.error("Błąd usuwania przypomnienia:", error);
+                console.error("Error deleting reminder:", error);
                 showMessage("Błąd podczas usuwania przypomnienia.", "error");
             }
-        });
+        };
 
         function loadReminders() {
-            if (!currentUser || !db) {
-                console.log("loadReminders(): Brak zalogowanego użytkownika lub bazy danych. Nie można załadować przypomnień.");
+            if (!currentUser || currentUser.isAnonymous || !db) {
+                console.log("loadReminders(): User is not logged in or is anonymous. Reminders will not be loaded.");
+                if (unsubscribeReminders) {
+                    unsubscribeReminders();
+                        unsubscribeReminders = null;
+                }
+                document.getElementById('reminders-list').innerHTML = '<p class="text-center text-gray-500">Zaloguj się, aby zobaczyć swoje przypomnienia.</p>';
                 return;
             }
+
+            if (unsubscribeReminders) {
+                unsubscribeReminders();
+            }
+
             const userId = currentUser.uid;
             const remindersList = document.getElementById('reminders-list');
             const remindersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'reminders');
 
-            onSnapshot(remindersCollectionRef, (querySnapshot) => {
+            unsubscribeReminders = onSnapshot(remindersCollectionRef, (querySnapshot) => {
                 remindersList.innerHTML = '';
                 if (querySnapshot.empty) {
-                    console.log("Brak przypomnień do wyświetlenia.");
                     remindersList.innerHTML = '<p class="text-center text-gray-500">Brak przypomnień. Dodaj pierwsze!</p>';
                 }
                 querySnapshot.forEach((doc) => {
@@ -455,13 +866,542 @@
                     `;
                     remindersList.appendChild(reminderItem);
                 });
-                console.log("Przypomnienia załadowane pomyślnie.");
+                console.log("Reminders loaded successfully.");
             }, (error) => {
-                console.error("Błąd ładowania przypomnień:", error);
-                showMessage("Błąd podczas ładowania przypomnień. Sprawdź uprawnienia w Firestore.", "error");
+                console.error("Error loading reminders:", error);
+                showMessage("Błąd podczas ładowania przypomnień.", "error");
+            });
+        }
+
+        // --- Memory Game logic ---
+        const emojis = ['🍇', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍏'];
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let memoryMoves = 0;
+        let lockBoard = false;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        window.initMemoryGame = () => {
+            const gameBoard = document.getElementById('memory-game-board');
+            gameBoard.innerHTML = ''; // Clear the board
+            
+            // Reset game state
+            flippedCards = [];
+            matchedPairs = 0;
+            memoryMoves = 0;
+            lockBoard = false;
+            updateMemoryStats();
+
+            // Create cards
+            memoryCards = [...emojis, ...emojis];
+            shuffle(memoryCards);
+
+            memoryCards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                card.dataset.emoji = emoji;
+                card.innerHTML = `
+                    <span class="front">?</span>
+                    <span class="back hidden">${emoji}</span>
+                `;
+                card.addEventListener('click', () => flipCard(card));
+                gameBoard.appendChild(card);
+            });
+        };
+
+        function flipCard(card) {
+            if (lockBoard) return;
+            if (card === flippedCards[0]) return; // Prevent double-clicking the same card
+
+            card.classList.add('flipped');
+            const backSpan = card.querySelector('.back');
+            const frontSpan = card.querySelector('.front');
+            if (backSpan && frontSpan) {
+                backSpan.classList.remove('hidden');
+                frontSpan.classList.add('hidden');
+            }
+            
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                memoryMoves++;
+                updateMemoryStats();
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const [firstCard, secondCard] = flippedCards;
+            const isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            const [firstCard, secondCard] = flippedCards;
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            
+            // Update the back of the matched card to show the emoji
+            firstCard.querySelector('.back').classList.remove('hidden');
+            secondCard.querySelector('.back').classList.remove('hidden');
+            
+            // Re-hide the front after a short delay
+            setTimeout(() => {
+                firstCard.querySelector('.front').classList.add('hidden');
+                secondCard.querySelector('.front').classList.add('hidden');
+            }, 500);
+
+            resetFlippedCards();
+            matchedPairs++;
+            updateMemoryStats();
+            
+            if (matchedPairs === emojis.length) {
+                setTimeout(() => showMessage(`Gratulacje! Wygrałeś w ${memoryMoves} ruchach!`), 1000);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                const [firstCard, secondCard] = flippedCards;
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                // Show the '?' on the front and hide the emoji
+                firstCard.querySelector('.front').classList.remove('hidden');
+                firstCard.querySelector('.back').classList.add('hidden');
+                secondCard.querySelector('.front').classList.remove('hidden');
+                secondCard.querySelector('.back').classList.add('hidden');
+                
+                resetFlippedCards();
+            }, 1000);
+        }
+
+        function resetFlippedCards() {
+            [flippedCards, lockBoard] = [[], false];
+        }
+
+        function updateMemoryStats() {
+            document.getElementById('memory-moves').textContent = memoryMoves;
+            document.getElementById('memory-matched').textContent = matchedPairs;
+        }
+
+        // --- Math Game logic ---
+        let mathScore = 0;
+        let mathTimer = null;
+        const gameDuration = 60; // in seconds
+        let currentCorrectAnswer = 0;
+        let currentDifficulty = 'easy';
+        
+        window.startMathGame = (difficulty) => {
+            currentDifficulty = difficulty;
+            
+            // Hide difficulty screen and show game screen
+            document.getElementById('math-difficulty-screen').classList.add('hidden');
+            document.getElementById('math-game-screen').classList.remove('hidden');
+
+            mathScore = 0;
+            document.getElementById('math-score').textContent = mathScore;
+            
+            document.getElementById('math-timer').textContent = gameDuration;
+            
+            // Clear any existing timer
+            if (mathTimer) {
+                clearInterval(mathTimer);
+            }
+
+            // Start a new timer
+            let timeLeft = gameDuration;
+            mathTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('math-timer').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(mathTimer);
+                    endMathGame();
+                }
+            }, 1000);
+            
+            generateQuestion();
+        };
+
+        function generateQuestion() {
+            let num1, num2, operator, operators;
+            
+            // Define ranges and operators based on difficulty
+            switch (currentDifficulty) {
+                case 'easy':
+                    operators = ['+', '-'];
+                    num1 = Math.floor(Math.random() * 20) + 1;
+                    num2 = Math.floor(Math.random() * 20) + 1;
+                    operator = operators[Math.floor(Math.random() * operators.length)];
+                    break;
+                case 'medium':
+                    operators = ['+', '-', '*'];
+                    num1 = Math.floor(Math.random() * 50) + 1;
+                    num2 = Math.floor(Math.random() * 50) + 1;
+                    operator = operators[Math.floor(Math.random() * operators.length)];
+                    break;
+                case 'hard':
+                    operators = ['+', '-', '*', '/'];
+                    num1 = Math.floor(Math.random() * 100) + 1;
+                    num2 = Math.floor(Math.random() * 100) + 1;
+                    operator = operators[Math.floor(Math.random() * operators.length)];
+                    break;
+            }
+
+            let questionText;
+            let correctAnswer;
+
+            // Generate question and correct answer
+            switch(operator) {
+                case '+':
+                    questionText = `${num1} + ${num2}`;
+                    correctAnswer = num1 + num2;
+                    break;
+                case '-':
+                    // Ensure the result is not negative
+                    const largerNum = Math.max(num1, num2);
+                    const smallerNum = Math.min(num1, num2);
+                    questionText = `${largerNum} - ${smallerNum}`;
+                    correctAnswer = largerNum - smallerNum;
+                    break;
+                case '*':
+                    // Keep multiplication simpler for now
+                    if (currentDifficulty === 'hard') {
+                         num1 = Math.floor(Math.random() * 15) + 5; // 5-20
+                         num2 = Math.floor(Math.random() * 15) + 5; // 5-20
+                    } else {
+                         num1 = Math.floor(Math.random() * 10) + 1;
+                         num2 = Math.floor(Math.random() * 10) + 1;
+                    }
+                    questionText = `${num1} * ${num2}`;
+                    correctAnswer = num1 * num2;
+                    break;
+                case '/':
+                    // Ensure the result is a whole number
+                    let divisor = Math.floor(Math.random() * 20) + 2; // Divisor from 2 to 21
+                    let dividend = divisor * (Math.floor(Math.random() * 20) + 1);
+                    questionText = `${dividend} / ${divisor}`;
+                    correctAnswer = dividend / divisor;
+                    break;
+            }
+
+            currentCorrectAnswer = correctAnswer;
+            document.getElementById('math-question').textContent = questionText;
+
+            // Generate answer options
+            const answers = new Set();
+            answers.add(correctAnswer);
+
+            while (answers.size < 4) {
+                // Generate wrong answers that are close to the correct one
+                const randomOffset = Math.floor(Math.random() * 10) - 5; // -5 to 4
+                let wrongAnswer = correctAnswer + randomOffset;
+                if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer);
+                if (wrongAnswer !== correctAnswer) {
+                    answers.add(wrongAnswer);
+                }
+            }
+
+            const shuffledAnswers = Array.from(answers);
+            shuffle(shuffledAnswers);
+
+            const answersContainer = document.getElementById('math-answers');
+            answersContainer.innerHTML = ''; // Clear previous buttons
+
+            shuffledAnswers.forEach(answer => {
+                const button = document.createElement('button');
+                button.textContent = answer;
+                button.className = 'math-answer-btn bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300';
+                button.onclick = () => checkAnswer(answer);
+                answersContainer.appendChild(button);
             });
         }
         
+        window.checkAnswer = (selectedAnswer) => {
+            if (selectedAnswer === currentCorrectAnswer) {
+                mathScore++;
+                showMessage("Dobrze!", "success");
+            } else {
+                mathScore = Math.max(0, mathScore - 1); // Decrease score, but not below zero
+                showMessage("Źle! Spróbuj ponownie.", "error");
+            }
+            document.getElementById('math-score').textContent = mathScore;
+            generateQuestion();
+        };
+
+        function endMathGame() {
+            showMessage(`Koniec gry! Twój wynik to: ${mathScore}.`, "success");
+            
+            // Disable buttons and show game over message
+            const answersContainer = document.getElementById('math-answers');
+            answersContainer.innerHTML = `<p class="text-2xl text-center text-gray-700 font-bold col-span-2">Koniec gry!</p>`;
+            
+            // Add a restart button
+            const restartButton = document.createElement('button');
+            restartButton.textContent = 'Zagraj ponownie';
+            restartButton.className = 'menu-button bg-green-500 text-white hover:bg-green-600 mt-4';
+            restartButton.onclick = () => startMathGame(currentDifficulty);
+            answersContainer.appendChild(restartButton);
+        }
+
+        // --- Puzzle Game logic ---
+        const PUZZLE_SIZE = 4;
+        let puzzleTiles = [];
+        let emptyTileIndex = 0;
+        let isSolved = false;
+
+        window.initPuzzleGame = () => {
+            puzzleTiles = Array.from({length: PUZZLE_SIZE * PUZZLE_SIZE - 1}, (_, i) => i + 1);
+            puzzleTiles.push(0); // 0 represents the empty space
+            isSolved = false;
+            
+            shufflePuzzle();
+            renderPuzzleBoard();
+        };
+        
+        function shufflePuzzle() {
+            // A simple shuffle and check for solvability
+            let inversions;
+            do {
+                shuffle(puzzleTiles);
+                inversions = 0;
+                for (let i = 0; i < puzzleTiles.length; i++) {
+                    for (let j = i + 1; j < puzzleTiles.length; j++) {
+                        if (puzzleTiles[i] > puzzleTiles[j] && puzzleTiles[i] !== 0 && puzzleTiles[j] !== 0) {
+                            inversions++;
+                        }
+                    }
+                }
+                // For a 4x4 grid, solvability depends on inversions and row of empty tile.
+                // For simplicity, we just check if inversions is odd to force a new shuffle
+                // as a basic guarantee of a randomized, but not impossible, state.
+            } while (inversions % 2 !== 0);
+
+            emptyTileIndex = puzzleTiles.indexOf(0);
+        }
+
+        function renderPuzzleBoard() {
+            const board = document.getElementById('puzzle-board');
+            board.innerHTML = '';
+            puzzleTiles.forEach((tile, index) => {
+                const tileElement = document.createElement('div');
+                tileElement.classList.add('puzzle-tile');
+                if (tile === 0) {
+                    tileElement.classList.add('empty');
+                } else {
+                    tileElement.textContent = tile;
+                    tileElement.onclick = () => handleTileClick(index);
+                }
+                board.appendChild(tileElement);
+            });
+        }
+
+        function handleTileClick(clickedIndex) {
+            if (isSolved) return;
+
+            const emptyIndex = puzzleTiles.indexOf(0);
+            const rowClicked = Math.floor(clickedIndex / PUZZLE_SIZE);
+            const colClicked = clickedIndex % PUZZLE_SIZE;
+            const rowEmpty = Math.floor(emptyIndex / PUZZLE_SIZE);
+            const colEmpty = emptyIndex % PUZZLE_SIZE;
+
+            const isAdjacent = (Math.abs(rowClicked - rowEmpty) + Math.abs(colClicked - colEmpty) === 1);
+
+            if (isAdjacent) {
+                // Swap the tiles
+                [puzzleTiles[clickedIndex], puzzleTiles[emptyIndex]] = [puzzleTiles[emptyIndex], puzzleTiles[clickedIndex]];
+                renderPuzzleBoard();
+                checkWinCondition();
+            }
+        }
+
+        function checkWinCondition() {
+            let win = true;
+            for (let i = 0; i < puzzleTiles.length - 1; i++) {
+                if (puzzleTiles[i] !== i + 1) {
+                    win = false;
+                    break;
+                }
+            }
+
+            if (win) {
+                isSolved = true;
+                showMessage(`Gratulacje! Ułożyłeś puzzle!`, "success");
+                renderSolvedBoard();
+            }
+        }
+
+        function renderSolvedBoard() {
+            const board = document.getElementById('puzzle-board');
+            board.innerHTML = '';
+            for (let i = 1; i <= 15; i++) {
+                const tileElement = document.createElement('div');
+                tileElement.classList.add('puzzle-tile', 'solved');
+                tileElement.textContent = i;
+                board.appendChild(tileElement);
+            }
+            // Add the final empty tile
+            const emptyTileElement = document.createElement('div');
+            emptyTileElement.classList.add('puzzle-tile', 'empty');
+            board.appendChild(emptyTileElement);
+        }
+
+        // --- Word Game logic ---
+        const wordList = ['dom', 'kot', 'pies', 'szkoła', 'rower', 'książka', 'telefon', 'słońce', 'kwiat', 'drzewo', 'kawa', 'herbata', 'miasto'];
+        let wordScore = 0;
+        let currentWord = '';
+        
+        window.initWordGame = () => {
+            wordScore = 0;
+            document.getElementById('word-score').textContent = wordScore;
+            document.getElementById('word-guess-input').value = '';
+            nextWord();
+        };
+
+        window.nextWord = () => {
+            const randomIndex = Math.floor(Math.random() * wordList.length);
+            currentWord = wordList[randomIndex];
+            
+            const scrambledWord = shuffleString(currentWord);
+            
+            document.getElementById('scrambled-word').textContent = scrambledWord.toUpperCase();
+            document.getElementById('word-guess-input').value = '';
+        };
+
+        function shuffleString(str) {
+            const arr = str.split('');
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr.join('');
+        }
+
+        window.checkWord = () => {
+            const guess = document.getElementById('word-guess-input').value.toLowerCase().trim();
+            if (guess === currentWord.toLowerCase()) {
+                wordScore++;
+                document.getElementById('word-score').textContent = wordScore;
+                showMessage("Zgadłeś! Dobra robota!", "success");
+                nextWord();
+            } else {
+                showMessage("Niestety, to nie jest to słowo. Spróbuj ponownie.", "error");
+            }
+        };
+
+        window.handleWordInput = (event) => {
+            if (event.key === 'Enter') {
+                checkWord();
+            }
+        };
+
     </script>
 </body>
+// Importuj moduły Firebase, których potrzebujesz
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+
+// Twoje dane konfiguracyjne Firebase (znajdziesz je w Konsoli Firebase -> Project settings)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "aplikacja-dla-seniorow.firebaseapp.com", // Lub Twoja autoryzowana domena dla autentykacji, np. "auth.twojastronaseniora.pl"
+  projectId: "aplikacja-dla-seniorow",
+  storageBucket: "aplikacja-dla-seniorow.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID" // Opcjonalnie, jeśli używasz Analytics
+};
+
+// Inicjalizacja Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app); // Pobierz instancję Authentication
+
+// Funkcja do logowania przez Google
+function signInWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  // Możesz użyć signInWithPopup dla wyskakującego okienka
+  // lub signInWithRedirect dla przekierowania na stronę logowania Google
+  signInWithPopup(auth, provider)
+    .then((result) => {
+      // Pomyślne logowanie
+      const user = result.user; // Obiekt użytkownika
+      const credential = GoogleAuthProvider.credentialFromResult(result); // Dane uwierzytelniające
+      const accessToken = credential.accessToken; // Token dostępu Google (jeśli potrzebujesz)
+
+      console.log("Zalogowano pomyślnie przez Google:", user.displayName);
+      // Tutaj możesz zaktualizować UI, przekierować użytkownika itp.
+    })
+    .catch((error) => {
+      // Wystąpił błąd
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      const email = error.customData.email; // E-mail konta, które próbowało się zalogować
+      const credential = GoogleAuthProvider.credentialFromError(error); // Dane uwierzytelniające
+      console.error("Błąd logowania Google:", errorCode, errorMessage);
+      // Pokaż komunikat błędu użytkownikowi
+    });
+}
+
+// Funkcja do logowania przez Facebook
+function signInWithFacebook() {
+  const provider = new FacebookAuthProvider();
+  // Dodaj zakresy uprawnień, jeśli potrzebujesz dostępu do danych użytkownika na Facebooku
+  // provider.addScope('public_profile');
+  // provider.addScope('email');
+
+  signInWithPopup(auth, provider)
+    .then((result) => {
+      // Pomyślne logowanie
+      const user = result.user;
+      const credential = FacebookAuthProvider.credentialFromResult(result);
+      const accessToken = credential.accessToken; // Token dostępu Facebooka (jeśli potrzebujesz)
+
+      console.log("Zalogowano pomyślnie przez Facebook:", user.displayName);
+      // Tutaj możesz zaktualizować UI, przekierować użytkownika itp.
+    })
+    .catch((error) => {
+      // Wystąpił błąd
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      const email = error.customData.email;
+      const credential = FacebookAuthProvider.credentialFromError(error);
+      console.error("Błąd logowania Facebook:", errorCode, errorMessage);
+      // Pokaż komunikat błędu użytkownikowi
+    });
+}
+
+// Przykład podłączenia do przycisków HTML
+// Zakładając, że masz przyciski z id="google-login-btn" i "facebook-login-btn"
+document.getElementById("google-login-btn").addEventListener("click", signInWithGoogle);
+document.getElementById("facebook-login-btn").addEventListener("click", signInWithFacebook);
+
+// Opcjonalnie: Monitoruj stan logowania użytkownika
+// onAuthStateChanged to nasłuchiwacz, który wywoływany jest za każdym razem, gdy zmienia się stan logowania (zalogowano/wylogowano)
+// Jest to bardzo przydatne do aktualizowania interfejsu użytkownika
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Użytkownik jest zalogowany
+    console.log("Użytkownik zalogowany:", user.uid, user.email, user.displayName);
+    // Wyświetl dane użytkownika, ukryj przyciski logowania, pokaż przycisk wylogowania
+  } else {
+    // Użytkownik jest wylogowany
+    console.log("Użytkownik wylogowany.");
+    // Ukryj dane użytkownika, pokaż przyciski logowania
+  }
+});
+<button id="google-login-btn">Zaloguj przez Google</button>
+<button id="facebook-login-btn">Zaloguj przez Facebook</button>
 </html>
