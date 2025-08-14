@@ -282,8 +282,8 @@
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Google!");
             } catch (error) {
-                console.error("Błąd logowania z Google:", error);
-                showMessage("Błąd logowania. Spróbuj ponownie.", "error");
+                console.error("Błąd logowania z Google:", error.code, error.message);
+                showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
         };
 
@@ -297,8 +297,8 @@
                 await signInWithPopup(auth, provider);
                 showMessage("Pomyślnie zalogowano z Facebook!");
             } catch (error) {
-                console.error("Błąd logowania z Facebook:", error);
-                showMessage("Błąd logowania. Spróbuj ponownie.", "error");
+                console.error("Błąd logowania z Facebook:", error.code, error.message);
+                showMessage(`Błąd logowania: ${error.message}. Spróbuj ponownie.`, "error");
             }
         };
 
@@ -426,3 +426,4 @@
     </script>
 </body>
 </html>
+
