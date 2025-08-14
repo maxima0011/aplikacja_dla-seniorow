@@ -247,15 +247,12 @@
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                     // Jeśli brak tokena, nasłuchuj i używaj anonimowego logowania, jeśli to konieczne
-                     // W tym przypadku onAuthStateChanged obsłuży wszystko
                 }
 
                 // Nasłuchuj zmian stanu uwierzytelnienia. Uruchamia się raz, gdy stan jest znany.
                 onAuthStateChanged(auth, (user) => {
                     isAuthReady = true; // Potwierdź, że Firebase Auth jest gotowe
-                    console.log("Firebase Auth jest gotowy.");
+                    console.log("Firebase Auth jest gotowy. Użytkownik:", user ? user.uid : "Brak");
                     
                     if (user) {
                         currentUser = user;
@@ -293,6 +290,7 @@
         }
 
         window.signInWithGoogle = () => checkAuthAndRun(async () => {
+            if (!isAuthReady) return;
             try {
                 const provider = new GoogleAuthProvider();
                 await signInWithPopup(auth, provider);
@@ -304,6 +302,7 @@
         });
 
         window.signInWithFacebook = () => checkAuthAndRun(async () => {
+            if (!isAuthReady) return;
             try {
                 const provider = new FacebookAuthProvider();
                 await signInWithPopup(auth, provider);
@@ -315,6 +314,7 @@
         });
 
         window.signOutUser = () => checkAuthAndRun(async () => {
+            if (!isAuthReady) return;
             try {
                 await signOut(auth);
                 showMessage("Pomyślnie wylogowano.");
@@ -368,11 +368,15 @@
         window.addReminder = () => checkAuthAndRun(async () => {
             if (!currentUser || !db) {
                 showMessage("Zaloguj się, aby dodawać przypomnienia.", "error");
+                console.log("Brak użytkownika lub bazy danych, nie można dodać przypomnienia.");
                 return;
             }
             const input = document.getElementById('new-reminder-input');
             const text = input.value.trim();
-            if (text === "") return;
+            if (text === "") {
+                console.log("Puste przypomnienie, nie dodano.");
+                return;
+            }
 
             try {
                 const userId = currentUser.uid;
@@ -383,6 +387,7 @@
                 });
                 input.value = '';
                 showMessage("Przypomnienie dodane!");
+                console.log("Dodano przypomnienie:", text);
             } catch (error) {
                 console.error("Błąd dodawania przypomnienia:", error);
                 showMessage("Błąd podczas dodawania przypomnienia. Sprawdź uprawnienia w Firestore.", "error");
@@ -392,6 +397,7 @@
         window.deleteReminder = (docId) => checkAuthAndRun(async () => {
             if (!currentUser || !db) {
                 showMessage("Zaloguj się, aby usuwać przypomnienia.", "error");
+                console.log("Brak użytkownika lub bazy danych, nie można usunąć przypomnienia.");
                 return;
             }
             try {
@@ -399,6 +405,7 @@
                 const reminderDocRef = doc(db, 'artifacts', appId, 'users', userId, 'reminders', docId);
                 await deleteDoc(reminderDocRef);
                 showMessage("Przypomnienie usunięte!");
+                console.log("Usunięto przypomnienie o id:", docId);
             } catch (error) {
                 console.error("Błąd usuwania przypomnienia:", error);
                 showMessage("Błąd podczas usuwania przypomnienia.", "error");
@@ -408,7 +415,7 @@
         // Funkcja do ładowania przypomnień
         function loadReminders() {
             if (!currentUser || !db) {
-                console.log("Brak zalogowanego użytkownika lub bazy danych. Nie można załadować przypomnień.");
+                console.log("loadReminders(): Brak zalogowanego użytkownika lub bazy danych. Nie można załadować przypomnień.");
                 return;
             }
             const userId = currentUser.uid;
@@ -418,6 +425,10 @@
             // Użyj onSnapshot, aby na bieżąco aktualizować listę
             onSnapshot(remindersCollectionRef, (querySnapshot) => {
                 remindersList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    console.log("Brak przypomnień do wyświetlenia.");
+                    remindersList.innerHTML = '<p class="text-center text-gray-500">Brak przypomnień. Dodaj pierwsze!</p>';
+                }
                 querySnapshot.forEach((doc) => {
                     const reminderData = doc.data();
                     const reminderItem = document.createElement('div');
@@ -428,6 +439,7 @@
                     `;
                     remindersList.appendChild(reminderItem);
                 });
+                console.log("Przypomnienia załadowane pomyślnie.");
             }, (error) => {
                 console.error("Błąd ładowania przypomnień:", error);
                 showMessage("Błąd podczas ładowania przypomnień. Sprawdź uprawnienia w Firestore.", "error");
@@ -437,3 +449,4 @@
     </script>
 </body>
 </html>
+
