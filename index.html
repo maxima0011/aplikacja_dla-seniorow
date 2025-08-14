@@ -233,6 +233,11 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
         async function initFirebase() {
+            if (!firebaseConfig.apiKey) {
+                console.error("Błąd: Brak klucza API w konfiguracji Firebase.");
+                showMessage("Wystąpił błąd podczas ładowania aplikacji. Brak klucza API.", "error");
+                return;
+            }
             try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
@@ -426,4 +431,3 @@
     </script>
 </body>
 </html>
-
