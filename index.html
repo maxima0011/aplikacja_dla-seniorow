@@ -42,8 +42,12 @@
             cursor: pointer;
             width: 100%;
         }
-        .menu-button:hover {
+        .menu-button:hover:not(:disabled) {
             transform: scale(1.02);
+        }
+        .menu-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
         }
         .game-card {
             display: flex;
@@ -109,26 +113,26 @@
             <div class="header mb-6">
                 <div id="time-display" class="text-5xl font-extrabold text-blue-700"></div>
                 <div id="date-display" class="text-xl font-semibold text-gray-500"></div>
-                <div id="user-info" class="text-lg font-semibold text-gray-700 mt-2"></div>
+                <div id="user-info" class="text-lg font-semibold text-gray-700 mt-2">Ładowanie...</div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <button onclick="showReminders()" class="menu-button bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                <button id="reminders-btn" onclick="showReminders()" class="menu-button bg-blue-500 text-white focus:outline-none focus:ring-4 focus:ring-blue-300" disabled>
                     Przypomnienia 🔔
                 </button>
-                <button onclick="showGames()" class="menu-button bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300">
+                <button id="games-btn" onclick="showGames()" class="menu-button bg-green-500 text-white focus:outline-none focus:ring-4 focus:ring-green-300" disabled>
                     Gry 🎮
                 </button>
             </div>
             <div class="grid grid-cols-1 gap-4 mb-6">
-                <button onclick="showRanking()" class="menu-button bg-yellow-500 text-white hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                <button id="ranking-btn" onclick="showRanking()" class="menu-button bg-yellow-500 text-white focus:outline-none focus:ring-4 focus:ring-yellow-300" disabled>
                     Ranking 🏆
                 </button>
             </div>
 
 
             <!-- Przyciski logowania, widoczne tylko dla niezalogowanych użytkowników -->
-            <div id="auth-buttons" class="grid grid-cols-2 gap-4">
+            <div id="auth-buttons" class="grid grid-cols-2 gap-4 hidden">
                 <button onclick="signInWithGoogle()" class="menu-button bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 flex items-center justify-center">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" class="w-6 h-6 mr-2" alt="Google Logo">
                     Zaloguj z Google
@@ -207,7 +211,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Funkcja do wyświetlania tymczasowych wiadomości
         function showMessage(message, type = 'success') {
@@ -253,6 +257,11 @@
                 onAuthStateChanged(auth, (user) => {
                     isAuthReady = true; // Potwierdź, że Firebase Auth jest gotowe
                     console.log("Firebase Auth jest gotowy. Użytkownik:", user ? user.uid : "Brak");
+
+                    // Włącz przyciski menu po zainicjalizowaniu Firebase
+                    document.getElementById('reminders-btn').disabled = false;
+                    document.getElementById('games-btn').disabled = false;
+                    document.getElementById('ranking-btn').disabled = false;
                     
                     if (user) {
                         currentUser = user;
@@ -381,7 +390,7 @@
             try {
                 const userId = currentUser.uid;
                 const remindersCollectionRef = collection(db, 'artifacts', appId, 'users', userId, 'reminders');
-                await setDoc(doc(remindersCollectionRef), {
+                await addDoc(remindersCollectionRef, {
                     text: text,
                     createdAt: new Date()
                 });
@@ -449,4 +458,3 @@
     </script>
 </body>
 </html>
-
